@@ -1,5 +1,5 @@
-# =====================================================================
-# Multifaceted deployAgnostic Timesaving Scalable analYtics Amalgamated PLATFORM
-# =====================================================================
+### =====================================================================
+### Multifaceted deployAgnostic Timesaving Scalable analYtics Amalgamated PLATFORM
+### =====================================================================
 
 ###### *APPLIED INFINITY*
