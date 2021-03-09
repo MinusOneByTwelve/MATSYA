@@ -1,3 +1,5 @@
-#========================================================================================
-#Multifaceted deployAgnostic Timesaving Scalable analYtics Amalgamated Platform => MATSYA
-#========================================================================================
+# =====================================================================
+# Multifaceted deployAgnostic Timesaving Scalable analYtics Amalgamated PLATFORM
+# =====================================================================
+
+###### *APPLIED INFINITY*
