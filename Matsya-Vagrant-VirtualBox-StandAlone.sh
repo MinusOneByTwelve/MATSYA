@@ -78,12 +78,7 @@ echo "==========================================================================
 
 If '$CLUSTERNAME' Appears On Above Commands,Execute
 
-   * sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt 
-   * sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant destroy -f  
-   * sudo vagrant box list | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant box remove -f
-   * sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME
-   * sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
-   * sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk     
+   * sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh      
      
 ==============================================================================
 "
@@ -92,12 +87,7 @@ read -p "> " -e -i "a" CONFIRMPROCEED
 echo ""
 IP_ADDRESS_LIST=()
 if [ $CONFIRMPROCEED == "p" ] || [ $CONFIRMPROCEED == "P" ] ; then
-	sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt
-	sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant destroy -f
-	sudo vagrant box list | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant box remove -f
-	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME
-	sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
-	sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk
+	sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh	
 	CONFIRMPROCEED="C"
 fi	
 if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
@@ -165,6 +155,34 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	echo ''	
 	read -p "Add To (/etc/hosts) y/n > " -e -i "y" ADDTOHOSTSFILE	
 	echo ""
+	DESTROYCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
+sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt 
+sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant destroy -f  
+sudo vagrant box list | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant box remove -f
+sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk 
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh	
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+")
+	echo "$DESTROYCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh > /dev/null	
+	STARTCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
+
+sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant up
+")
+	echo "$STARTCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh > /dev/null	
+	STOPCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
+
+sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt
+")
+	echo "$STOPCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh > /dev/null		
+	echo "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts > /dev/null	
 	if [ $ADDTOHOSTSFILE == "y" ] || [ $ADDTOHOSTSFILE == "Y" ] ; then
 		for ((i = SERIESSTART; i < SERIESEND; i++))
 		do 
@@ -172,19 +190,13 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			IP_ADDRESS_HYPHEN2=${NEWIPADDR//./-}
 			sudo -H -u root bash -c "sed -i -e s~\"$NEWIPADDR\"~\"#$NEWIPADDR\"~g /etc/hosts"
 			sudo -H -u root bash -c "echo \"$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local\" >> /etc/hosts"
+			echo "sudo sed -i -e s~\"$NEWIPADDR\"~\"#$NEWIPADDR\"~g /etc/hosts" | sudo tee -a $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh > /dev/null
+			echo "$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts > /dev/null
 		done											
 	fi		
 	ROOTPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 	MATSYAPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 	VAGRANTPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-	echo -e "${RED}-----------------------${NC}"
-	echo -e "${RED}${BOLD}\x1b[5mNEW PASSWORDS${NORM}${NC}"
-	echo -e "${RED}-----------------------${NC}"
-	echo -e "${RED}root    => $ROOTPWD${NC}"
-	echo -e "${RED}vagrant => $VAGRANTPWD${NC}"
-	echo -e "${RED}matsya  => $MATSYAPWD${NC}"
-	echo -e "${RED}-----------------------${NC}"	
-	echo '' 
 	echo '-----------------------'
 	echo 'NEW SSH KEYS'
 	echo '-----------------------'
@@ -199,9 +211,6 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Keys/id_rsa	
 	sudo chown -R root:root $BASE/VagVBoxSA/$CLUSTERNAME/Keys/id_rsa.pub
 	sudo chmod -R u=rx,g=,o= $BASE/VagVBoxSA/$CLUSTERNAME/Keys/id_rsa.pub	
-	echo '-----------------------'
-	echo "* $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
-* $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk"
 	echo '-----------------------'
 	COUNTER=0
 	COORDINATOR="NONE"		
@@ -270,9 +279,11 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 			echo ""
 		else
 			FINALPOINTTODISKSIZE=$((ORIGINALSIZEOFDISK + 43))
-			THECOMMAND=$(echo 'number="2" && sudo parted --script /dev/sda mkpart primary ext4 43GB '"$FINALPOINTTODISKSIZE"'GB && sudo partprobe /dev/sda && sudo mkfs -F -t ext4 /dev/sda$number && sudo mkfs -F /dev/sda$number -t ext4 && sudo tune2fs -m 0 /dev/sda$number && sdauuid=$(sudo blkid -s UUID -o value /dev/sda$number) && sudo mkdir -p /mnt/MatsyaHDD && sudo e2label /dev/sda$number MatsyaHDD && echo "UUID=$sdauuid  /mnt/MatsyaHDD ext4 defaults 0 3" | sudo tee -a /etc/fstab > /dev/null && echo "----------------------------------------------------------------------------------------------" && sudo cat /etc/fstab && echo "----------------------------------------------------------------------------------------------" && lsblk -o name,mountpoint,label,size,fstype,uuid && echo "----------------------------------------------------------------------------------------------" && sudo parted -ls && echo "----------------------------------------------------------------------------------------------"')
+			THECOMMAND=$(echo 'number="2" && sudo parted --script /dev/sda mkpart primary ext4 43GB '"$FINALPOINTTODISKSIZE"'GB && sudo partprobe /dev/sda && sudo mkfs -F -t ext4 /dev/sda$number && sudo mkfs -F /dev/sda$number -t ext4 && sudo tune2fs -m 0 /dev/sda$number && sdauuid=$(sudo blkid -s UUID -o value /dev/sda$number) && sudo mkdir -p /mnt/MatsyaHDD && sudo mkdir -p /opt/java/Open && sudo mkdir -p /usr/java && sudo mkdir -p /usr/share/java && sudo e2label /dev/sda$number MatsyaHDD && echo "UUID=$sdauuid  /mnt/MatsyaHDD ext4 defaults 0 3" | sudo tee -a /etc/fstab > /dev/null && echo "----------------------------------------------------------------------------------------------" && sudo cat /etc/fstab && echo "----------------------------------------------------------------------------------------------" && lsblk -o name,mountpoint,label,size,fstype,uuid && echo "----------------------------------------------------------------------------------------------" && sudo parted -ls && echo "----------------------------------------------------------------------------------------------"')
 			sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key" "$THECOMMAND"
-		fi				
+		fi
+		THECOMMAND2=$(echo 'sudo mkdir -p /mnt/MatsyaHDD && sudo mkdir -p /opt/java/Open && sudo mkdir -p /usr/java && sudo mkdir -p /usr/share/java && echo "'"$MATSYAPWD"'" | sudo tee /usr/bin/.mtsypswd > /dev/null && sudo chmod u=r,g=,o= /usr/bin/.mtsypswd && sudo rm -rf /etc/hostname && echo "'"matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3.local"'" | sudo tee /etc/hostname')
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key" "$THECOMMAND2"						
 		sudo cat $BASE/VagVBoxSA/$CLUSTERNAME/Keys/id_rsa.pub | sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key" 'cat >> $HOME/.ssh/authorized_keys'
 		sudo -H -u root bash -c "pushd $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3 && sudo vagrant halt && sed -i 's/#config.ssh.private_key_path/config.ssh.private_key_path/' Vagrantfile && popd"
 		sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key
@@ -280,11 +291,66 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo '$ROOTPWD' | sudo passwd --stdin 'root'"				
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo '$VAGRANTPWD' | sudo passwd --stdin 'vagrant'"		
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo '$MATSYAPWD' | sudo passwd --stdin 'matsya'"
-		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" 'sudo sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config && sudo systemctl restart sshd.service'				
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" 'sudo sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config && sudo systemctl restart sshd.service'
+		JDKPATH="$BASE/Repo/jdk11.7z"
+		SQLJDKCONNECTORPATH="$BASE/Repo/mysql-connector-java-8.0.23.jar"
+		JDKSETUPPATH="$BASE/Repo/Matsya-SetUp-Java.sh"
+		THEHOSTSFILE="$BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts"
+		sudo sshpass -p "$VAGRANTPWD" scp $JDKPATH vagrant@$VMIP:/home/vagrant
+		sudo sshpass -p "$VAGRANTPWD" scp $SQLJDKCONNECTORPATH vagrant@$VMIP:/home/vagrant
+		sudo sshpass -p "$VAGRANTPWD" scp $JDKSETUPPATH vagrant@$VMIP:/home/vagrant
+		sudo sshpass -p "$VAGRANTPWD" scp $THEHOSTSFILE vagrant@$VMIP:/home/vagrant
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc && sudo mv /home/vagrant/jdk11.7z /opt/java && sudo mv /home/vagrant/mysql-connector-java-8.0.23.jar /opt/java && sudo mv /home/vagrant/Matsya-SetUp-Java.sh /opt/java && sudo chmod 777 /opt/java/Matsya-SetUp-Java.sh && sudo /opt/java/Matsya-SetUp-Java.sh"				
 		echo '-----------------------'
 		COUNTER=$((COUNTER + 1))
 	done	
-	echo ''	
+	echo ''
+	sudo cp $BASE/Repo/GlobalPushTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo touch $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo touch $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+	sudo chmod -R u=rwx,g=rwx,o=rwx $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec					
+	sudo chmod -R u=r,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
+	sudo chmod -R u=r,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk
+	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts	
+	echo -e "${RED}-----------------------${NC}"
+	echo -e "${RED}${BOLD}\x1b[5mNEW PASSWORDS${NORM}${NC}"
+	echo -e "${RED}-----------------------${NC}"
+	echo -e "${RED}root    => $ROOTPWD${NC}"
+	echo -e "${RED}vagrant => $VAGRANTPWD${NC}"
+	#echo -e "${RED}matsya  => $MATSYAPWD${NC}"
+	echo -e "${RED}-----------------------${NC}"	
+	echo "* $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
+* $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk"
+	echo '-----------------------'
+	echo "* PASSWORD LOGIN   => sudo sshpass -p \"$VAGRANTPWD\" ssh vagrant@$COORDINATOR"
+	echo "* SSH KEY LOGIN    => sudo ssh vagrant@$COORDINATOR -p 22  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\""
+	echo "* FILE PUSH        => sudo sshpass -p \"$VAGRANTPWD\" scp File_Path_On_Current_System vagrant@$COORDINATOR:/home/vagrant"
+	echo "* FILE PULL        => sudo sshpass -p \"$VAGRANTPWD\" scp vagrant@$COORDINATOR:/home/vagrant/RequiredFile Location_On_Current_System"
+	echo "* EXECUTE          => sudo ssh vagrant@$COORDINATOR -p 22  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\" \"echo 'Hello From '\$(hostname)\""		
+	echo "* START CLUSTER    => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh"	
+	echo "* STOP CLUSTER     => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh"
+	echo "* KILL CLUSTER     => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh"
+	echo "* GLOBAL FILE PUSH => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh I $VAGRANTPWD File_Path_On_Current_System"
+	echo "                      {Params - [1] (I)nclude / (E)xclude Coordinator [2] Password For User => vagrant [3] Full Path Of The Required File}"
+	echo "* GLOBAL EXECUTE   => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh I $VAGRANTPWD"
+	echo "                      {Params - [1] (I)nclude / (E)xclude Coordinator [2] Password For User => vagrant}"
+	echo "                      {All Commands To Be Executed Can Be Written In $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec File}"							
+	echo '-----------------------'		
+	echo '' 			
 	echo "=============================================================================="
 	echo ''
 else
@@ -292,5 +358,4 @@ else
 	echo ''
 	exit
 fi			
-
 

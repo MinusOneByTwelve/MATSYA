@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if [ "$#" -ne 3 ]; then
+    echo "
+=====================================  
+Params -: 
+[1] (I)nclude / (E)xclude Coordinator 
+[2] Password For User => vagrant 
+[3] Full Path Of The Required File
+=====================================
+    "
+    exit
+fi
+
+BASE="THEBASELOCATION"
+COORDINATOR="THECOORDINATOR"
+CLUSTERNAME="THECLUSTERNAME"
+for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
+    if [ -d "$Config" ]; then
+    	Config=${Config//$BASE/}
+    	Config=${Config//VagVBoxSA/}
+    	Config=${Config//$CLUSTERNAME/}
+    	Config=${Config//Configs/}
+    	Config=${Config//matsya-vagvbox-sa/}
+    	Config=${Config//\//}
+    	Config=${Config//-/.}
+    	Config=${Config//../}
+    	CHOICE=$1
+    	if [ $CHOICE == "E" ] || [ $CHOICE == "e" ] ; then
+		if [ $Config == "$COORDINATOR" ] || [ $Config == "$COORDINATOR" ] ; then
+			Config="Coordinator"
+		fi
+	fi    	
+	if [ $Config == "Coordinator" ] || [ $Config == "Coordinator" ] ; then
+		echo ""
+	else
+		echo "----------------"
+		echo "$Config"
+		echo "----------------"
+		echo 'Copy Started...'
+		echo '~~~~~~~~~~~~~~~~'
+		sudo sshpass -p $2 scp $3 vagrant@$Config:/home/vagrant
+		echo 'Copy Complete...'
+		echo '~~~~~~~~~~~~~~~~'		
+		echo ''
+	fi    	
+    fi
+done
+
