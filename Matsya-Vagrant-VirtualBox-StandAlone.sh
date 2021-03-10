@@ -308,8 +308,11 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	sudo cp $BASE/Repo/GlobalPushTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
-	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
-	sudo touch $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh	
+	sudo cp $BASE/Repo/GlobalExecTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo touch $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
