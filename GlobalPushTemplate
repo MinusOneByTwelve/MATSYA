@@ -15,6 +15,8 @@ fi
 BASE="THEBASELOCATION"
 COORDINATOR="THECOORDINATOR"
 CLUSTERNAME="THECLUSTERNAME"
+RANDOMSSHPORT="THERANDOMSSHPORT"
+
 for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
     if [ -d "$Config" ]; then
     	Config=${Config//$BASE/}
@@ -39,7 +41,7 @@ for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
 		echo "----------------"
 		echo 'Copy Started...'
 		echo '~~~~~~~~~~~~~~~~'
-		sudo sshpass -p $2 scp $3 vagrant@$Config:/home/vagrant
+		sudo sshpass -p $2 scp -P $RANDOMSSHPORT $3 vagrant@$Config:/home/vagrant
 		echo 'Copy Complete...'
 		echo '~~~~~~~~~~~~~~~~'		
 		echo ''

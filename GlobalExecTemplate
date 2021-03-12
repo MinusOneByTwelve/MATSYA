@@ -3,6 +3,7 @@
 BASE="THEBASELOCATION"
 COORDINATOR="THECOORDINATOR"
 CLUSTERNAME="THECLUSTERNAME"
+RANDOMSSHPORT="THERANDOMSSHPORT"
 
 if [ "$#" -ne 2 ]; then
 	echo "
@@ -63,8 +64,8 @@ for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
 		echo '#!/bin/bash
 ' | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/$RANDOMFILENAME > /dev/null
 		sudo bash -c "cat $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec >> $BASE/VagVBoxSA/$CLUSTERNAME/$RANDOMFILENAME"
-		sudo sshpass -p $2 scp $BASE/VagVBoxSA/$CLUSTERNAME/$RANDOMFILENAME vagrant@$Config:/home/vagrant
-		sudo ssh vagrant@$Config -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo chmod 777 $RANDOMFILENAME && ./$RANDOMFILENAME && sudo rm -f $RANDOMFILENAME"
+		sudo sshpass -p $2 scp -P $RANDOMSSHPORT $BASE/VagVBoxSA/$CLUSTERNAME/$RANDOMFILENAME vagrant@$Config:/home/vagrant
+		sudo ssh vagrant@$Config -p $RANDOMSSHPORT  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo chmod 777 $RANDOMFILENAME && ./$RANDOMFILENAME && sudo rm -f $RANDOMFILENAME"
 		sudo rm -f $BASE/VagVBoxSA/$CLUSTERNAME/$RANDOMFILENAME 
 		echo '~~~~~~~~~~~~~~~~~~~~~'
 		echo 'Execution Complete...'

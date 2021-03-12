@@ -143,6 +143,11 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	echo '-----------------------'
 	SERIESSTART=$(echo "$(($STARTRANDOMIP + 0))")
 	SERIESEND=$(echo "$(($STARTRANDOMIP + $NODESNUMBER))")
+	ROOTPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+	MATSYAPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+	VAGRANTPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)	
+	SSHBYCOORDINATOR="echo '-----------------------' && "
+	COUNTERx=0	
 	for ((i = SERIESSTART; i < SERIESEND; i++))
 	do 
 		NEWIPADDR="${BASEIP}${i}"
@@ -150,7 +155,12 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		IP_ADDRESS_HYPHEN=${NEWIPADDR//./-}
 		echo "$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN.local"
 		sudo mkdir -p $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN
+		if (( $COUNTERx > 0 )) ; then
+			SSHBYCOORDINATOR+="sudo sshpass -p \"$MATSYAPWD\" ssh-copy-id -i /home/vagrant/.ssh/id_rsa.pub -o StrictHostKeyChecking=no -o IdentitiesOnly=yes matsya@$NEWIPADDR && "
+		fi
+		COUNTERx=$((COUNTERx + 1))
 	done
+	SSHBYCOORDINATOR+="echo '-----------------------'"
 	echo '-----------------------'
 	echo ''	
 	read -p "Add To (/etc/hosts) y/n > " -e -i "y" ADDTOHOSTSFILE	
@@ -191,12 +201,9 @@ sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs
 			sudo -H -u root bash -c "sed -i -e s~\"$NEWIPADDR\"~\"#$NEWIPADDR\"~g /etc/hosts"
 			sudo -H -u root bash -c "echo \"$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local\" >> /etc/hosts"
 			echo "sudo sed -i -e s~\"$NEWIPADDR\"~\"#$NEWIPADDR\"~g /etc/hosts" | sudo tee -a $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh > /dev/null
-			echo "$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts > /dev/null
+			echo "$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts > /dev/null			
 		done											
 	fi		
-	ROOTPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-	MATSYAPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-	VAGRANTPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 	echo '-----------------------'
 	echo 'NEW SSH KEYS'
 	echo '-----------------------'
@@ -213,7 +220,8 @@ sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs
 	sudo chmod -R u=rx,g=,o= $BASE/VagVBoxSA/$CLUSTERNAME/Keys/id_rsa.pub	
 	echo '-----------------------'
 	COUNTER=0
-	COORDINATOR="NONE"		
+	COORDINATOR="NONE"
+	RANDOMSSHPORT=$(shuf -i 45000-46000 -n 1)		
 	for VMIP in "${IP_ADDRESS_LIST[@]}"
 	do
 		IP_ADDRESS_HYPHEN3=${VMIP//./-}
@@ -295,15 +303,29 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		JDKPATH="$BASE/Repo/jdk11.7z"
 		SQLJDKCONNECTORPATH="$BASE/Repo/mysql-connector-java-8.0.23.jar"
 		JDKSETUPPATH="$BASE/Repo/Matsya-SetUp-Java.sh"
+		SSHRELATEDRPMS="$BASE/Repo/policycoreutils-python.7z"
 		THEHOSTSFILE="$BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts"
 		sudo sshpass -p "$VAGRANTPWD" scp $JDKPATH vagrant@$VMIP:/home/vagrant
 		sudo sshpass -p "$VAGRANTPWD" scp $SQLJDKCONNECTORPATH vagrant@$VMIP:/home/vagrant
 		sudo sshpass -p "$VAGRANTPWD" scp $JDKSETUPPATH vagrant@$VMIP:/home/vagrant
 		sudo sshpass -p "$VAGRANTPWD" scp $THEHOSTSFILE vagrant@$VMIP:/home/vagrant
-		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc && sudo mv /home/vagrant/jdk11.7z /opt/java && sudo mv /home/vagrant/mysql-connector-java-8.0.23.jar /opt/java && sudo mv /home/vagrant/Matsya-SetUp-Java.sh /opt/java && sudo chmod 777 /opt/java/Matsya-SetUp-Java.sh && sudo /opt/java/Matsya-SetUp-Java.sh"				
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc && sudo mv /home/vagrant/jdk11.7z /opt/java && sudo mv /home/vagrant/mysql-connector-java-8.0.23.jar /opt/java && sudo mv /home/vagrant/Matsya-SetUp-Java.sh /opt/java && sudo chmod 777 /opt/java/Matsya-SetUp-Java.sh && sudo /opt/java/Matsya-SetUp-Java.sh"
+		sudo sshpass -p "$VAGRANTPWD" scp $SSHRELATEDRPMS vagrant@$VMIP:/home/vagrant
+		if (( $COUNTER == 0 )) ; then
+			echo ''
+		else
+			sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf /usr/bin/.mtsypswd"									
+		fi						
 		echo '-----------------------'
 		COUNTER=$((COUNTER + 1))
-	done	
+	done
+	sudo ssh vagrant@$COORDINATOR -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo -e  'y\n'|ssh-keygen -t rsa -P '' -f /home/vagrant/.ssh/id_rsa && cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys && eval \$(ssh-agent) > /dev/null && ssh-add && MATSYAPSWD=\$(sudo cat /usr/bin/.mtsypswd) && sshpass -p \"\$MATSYAPSWD\" ssh-copy-id -i /home/vagrant/.ssh/id_rsa.pub -o StrictHostKeyChecking=no -o IdentitiesOnly=yes vagrant@$COORDINATOR"
+	sudo ssh vagrant@$COORDINATOR -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "$SSHBYCOORDINATOR"	
+	for VMIP in "${IP_ADDRESS_LIST[@]}"
+	do
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo 7z x policycoreutils-python.7z -o. && sudo yum install -y policycoreutils-python/* && sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z"
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z && SSHPORT=\"$RANDOMSSHPORT\" && sudo systemctl stop postfix && sudo systemctl disable postfix && sudo systemctl start firewalld && sudo systemctl enable firewalld && sudo sed -i -e s~\"Port\"~\"#Port\"~g /etc/ssh/sshd_config && echo \"Port \$SSHPORT\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo semanage port -a -t ssh_port_t -p tcp \$SSHPORT && sudo semanage port -l | grep ssh && sudo firewall-cmd --permanent --zone=public --add-port=\$SSHPORT/tcp && sudo firewall-cmd --reload && sudo systemctl restart sshd.service && echo '-----' && sudo lsof -nP -iTCP -sTCP:LISTEN | grep \"COMMAND\|IPv4\" && echo '-----' && sudo netstat -tnlp | grep -v tcp6 && echo '-----'"		
+	done			
 	echo ''
 	sudo cp $BASE/Repo/GlobalPushTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
@@ -312,8 +334,12 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	sudo cp $BASE/Repo/GlobalExecTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
-	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh	
+	sudo sed -i s#THERANDOMSSHPORT#$RANDOMSSHPORT#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo sed -i s#THERANDOMSSHPORT#$RANDOMSSHPORT#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh			
 	sudo touch $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+	sudo touch $BASE/VagVBoxSA/$CLUSTERNAME/.ports
+	echo "SSH~$RANDOMSSHPORT" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/.ports > /dev/null
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
@@ -325,7 +351,9 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
-	sudo chmod -R u=rwx,g=rwx,o=rwx $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec					
+	sudo chmod -R u=rw,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+	sudo chown -R root:root $BASE/VagVBoxSA/$CLUSTERNAME/.ports
+	sudo chmod -R u=r,g=,o= $BASE/VagVBoxSA/$CLUSTERNAME/.ports						
 	sudo chmod -R u=r,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
 	sudo chmod -R u=r,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk
 	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts	
@@ -334,16 +362,15 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	echo -e "${RED}-----------------------${NC}"
 	echo -e "${RED}root    => $ROOTPWD${NC}"
 	echo -e "${RED}vagrant => $VAGRANTPWD${NC}"
-	#echo -e "${RED}matsya  => $MATSYAPWD${NC}"
 	echo -e "${RED}-----------------------${NC}"	
 	echo "* $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
 * $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk"
 	echo '-----------------------'
-	echo "* PASSWORD LOGIN   => sudo sshpass -p \"$VAGRANTPWD\" ssh vagrant@$COORDINATOR"
-	echo "* SSH KEY LOGIN    => sudo ssh vagrant@$COORDINATOR -p 22  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\""
-	echo "* FILE PUSH        => sudo sshpass -p \"$VAGRANTPWD\" scp File_Path_On_Current_System vagrant@$COORDINATOR:/home/vagrant"
-	echo "* FILE PULL        => sudo sshpass -p \"$VAGRANTPWD\" scp vagrant@$COORDINATOR:/home/vagrant/RequiredFile Location_On_Current_System"
-	echo "* EXECUTE          => sudo ssh vagrant@$COORDINATOR -p 22  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\" \"echo 'Hello From '\$(hostname)\""		
+	echo "* PASSWORD LOGIN   => sudo sshpass -p \"$VAGRANTPWD\" ssh vagrant@$COORDINATOR -p $RANDOMSSHPORT"
+	echo "* SSH KEY LOGIN    => sudo ssh vagrant@$COORDINATOR -p $RANDOMSSHPORT  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\""
+	echo "* FILE PUSH        => sudo sshpass -p \"$VAGRANTPWD\" scp -P $RANDOMSSHPORT File_Path_On_Current_System vagrant@$COORDINATOR:/home/vagrant"
+	echo "* FILE PULL        => sudo sshpass -p \"$VAGRANTPWD\" scp -P $RANDOMSSHPORT vagrant@$COORDINATOR:/home/vagrant/RequiredFile Location_On_Current_System"
+	echo "* EXECUTE          => sudo ssh vagrant@$COORDINATOR -p $RANDOMSSHPORT  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\" \"echo 'Hello From '\$(hostname)\""		
 	echo "* START CLUSTER    => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh"	
 	echo "* STOP CLUSTER     => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh"
 	echo "* KILL CLUSTER     => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh"
