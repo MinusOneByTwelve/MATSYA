@@ -98,6 +98,7 @@ fi
 read -s -p "Enter Password For User => vagrant > " -e -i "" VAGRANTPSWD
 echo ""
 echo "-------------------------"
+echo ""
 for _CHOICE in "${CHOICELIST[@]}"
 do
 	for _ACTUALNORMAL in "${ACTUALNORMAL[@]}"
@@ -132,6 +133,7 @@ for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
     	echo "$Config	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/hosts > /dev/null    	
     fi
 done
+echo ""
 sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh I $VAGRANTPSWD $BASE/VagVBoxSA/$CLUSTERNAME/hosts
 sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/hosts
 sudo mv $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec $BASE/matsya-vagvbox-sa-$CLUSTERNAME-execbckup
