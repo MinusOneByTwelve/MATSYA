@@ -54,6 +54,7 @@ then
 	rm -f /etc/alternatives/javapackager
 	rm -f /etc/alternatives/javaws
 	rm -f /etc/alternatives/javaws.real
+	rm -f /etc/alternatives/keytool
 	rm -f /usr/bin/jar
 	rm -f /usr/bin/jps
 	rm -f /usr/bin/java
@@ -63,6 +64,7 @@ then
 	rm -f /usr/bin/javapackager
 	rm -f /usr/bin/javaws
 	rm -f /usr/bin/javaws.real
+	rm -f /usr/bin/keytool	
 	rm -Rf /opt/java/$JAVAFolderName
 	ln -s $JAVAInstallPath /opt/java/$JAVAFolderName
 	ln -s /opt/java/$JAVAFolderName /usr/java/$JAVAFolderName
@@ -74,6 +76,7 @@ then
 	ln -s /opt/java/$JAVAFolderName/bin/javap /etc/alternatives/javap
 	ln -s /opt/java/$JAVAFolderName/bin/javapackager /etc/alternatives/javapackager
 	ln -s /opt/java/$JAVAFolderName/bin/javaws /etc/alternatives/javaws
+	ln -s /opt/java/$JAVAFolderName/bin/keytool /etc/alternatives/keytool
 	ln -s /etc/alternatives/jar /usr/bin/jar
 	ln -s /etc/alternatives/jps /usr/bin/jps
 	ln -s /etc/alternatives/java /usr/bin/java
@@ -82,6 +85,7 @@ then
 	ln -s /etc/alternatives/javap /usr/bin/javap
 	ln -s /etc/alternatives/javapackager /usr/bin/javapackager
 	ln -s /etc/alternatives/javaws /usr/bin/javaws
+	ln -s /etc/alternatives/keytool /usr/bin/keytool	
 	echo "                                                                         "
 	echo "---------------------------------------------------------------------"
 	java -version
@@ -89,10 +93,12 @@ then
 	ls -l /etc/alternatives/java*
 	ls -l /etc/alternatives/jar
 	ls -l /etc/alternatives/jps
+	ls -l /etc/alternatives/keytool
 	echo "---------------------------------------------------------------------"
 	ls -l /usr/bin/java*
 	ls -l /usr/bin/jar
 	ls -l /usr/bin/jps
+	ls -l /usr/bin/keytool
 	echo "---------------------------------------------------------------------"
 	chown root:root -R /opt/java
 	chmod 777 -R /opt/java

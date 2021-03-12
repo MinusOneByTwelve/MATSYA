@@ -1,0 +1,145 @@
+#!/bin/bash
+
+clear
+
+RED='\033[0;31m'
+NC='\033[0m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+LBLUE='\033[1;34m'
+DGRAY='\033[1;35m'
+PURPLE='\033[0;35m'
+RGRAY='\033[1;30m'
+BOLD=$(tput bold)
+NORM=$(tput sgr0)
+ORANGE='\033[1;33m'
+
+BASE="THEBASELOCATION"
+COORDINATOR="THECOORDINATOR"
+CLUSTERNAME="THECLUSTERNAME"
+
+COUNTER=1
+ACTUALNORMAL=()
+CHOICENAME=""
+SLNO=0
+INCREMENT=1
+
+echo -e "${ORANGE}==============================================================================${NC}"
+echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
+echo -e "${GREEN}==============================================================================${NC}"
+echo ''
+echo -e "\x1b[3m\x1b[4mVAGRANT VIRTUALBOX STANDALONE\x1b[m"
+echo ''
+echo -e "${RED}-------------------------${NC}"
+echo -e "${RED}${BOLD}NODES AVAILABLE [$CLUSTERNAME]${NORM}${NC}"
+echo -e "${RED}-------------------------${NC}"
+for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
+    if [ -d "$Config" ]; then
+    	Config=${Config//$BASE/}
+    	Config=${Config//VagVBoxSA/}
+    	Config=${Config//$CLUSTERNAME/}
+    	Config=${Config//Configs/}
+    	Config=${Config//matsya-vagvbox-sa/}
+    	Config=${Config//\//}
+    	Config=${Config//-/.}
+    	Config=${Config//../}
+    	CHOICE="E"
+    	if [ $CHOICE == "E" ] || [ $CHOICE == "e" ] ; then
+		if [ $Config == "$COORDINATOR" ] || [ $Config == "$COORDINATOR" ] ; then
+			Config="Coordinator"
+		fi
+	fi    	
+	if [ $Config == "Coordinator" ] || [ $Config == "Coordinator" ] ; then
+		ABC="XYZ"
+	else
+		echo "($COUNTER) $Config"
+		ACTUALNORMAL=("${ACTUALNORMAL[@]}" "$COUNTER~$Config")
+		COUNTER=$((COUNTER + 1))
+	fi    	
+    fi
+done
+echo -e "${RED}-------------------------${NC}"
+echo ''
+read -p "Enter Node Number(s) (If Multiple, Comma Seperated. Eg. 1,2,3) > " -e -i "0" NodeNumber
+IFS=',' read -r -a CHOICELIST <<< $NodeNumber
+for _CHOICE in "${CHOICELIST[@]}"
+do
+	if ! [[ "$_CHOICE" =~ ^[0-9]+$ ]] ; 
+	 then exec >&2; echo ""; echo -e "${RED}Number(s) Required!!${NC}"; echo ""; exit;
+	fi
+	if [ $_CHOICE == "0" ] ; then
+		echo ""; echo -e "${RED}Number(s) Required!!${NC}"; echo ""; exit;	
+	fi		
+done
+for _CHOICE in "${CHOICELIST[@]}"
+do
+	for _ACTUALNORMAL in "${ACTUALNORMAL[@]}"
+	do
+		IFS='~' read -r -a _ACTUALNORMALSPLIT <<< $_ACTUALNORMAL
+		if [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] || [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] ; then	
+			SLNO="$(($SLNO+$INCREMENT))"
+			CHOICENAME="$CHOICENAME,${_ACTUALNORMALSPLIT[1]}"
+		fi	
+	done				
+done
+if [ "$SLNO" -lt "1" ]; then
+    echo ""; echo -e "${RED}Valid Number(s) Required!!${NC}"; echo ""; exit;
+fi
+CHOICENAME=${CHOICENAME:1}
+echo ""
+echo -e "${RED}${BOLD}\x1b[5mConfirm Delete${NORM} => ${NC}[${LBLUE}$CHOICENAME${NC}] (${RED}y${NC}/${GREEN}n${NC})"
+echo -n "> "
+read ConfirmDelete
+echo ""	
+if [ "$ConfirmDelete" == "" ] || [ "$ConfirmDelete" == "N" ] || [ "$ConfirmDelete" == "n" ] ; then
+	exit
+fi
+read -s -p "Enter Password For User => vagrant > " -e -i "" VAGRANTPSWD
+echo ""
+echo "-------------------------"
+for _CHOICE in "${CHOICELIST[@]}"
+do
+	for _ACTUALNORMAL in "${ACTUALNORMAL[@]}"
+	do
+		IFS='~' read -r -a _ACTUALNORMALSPLIT <<< $_ACTUALNORMAL
+		if [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] || [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] ; then	
+			THEIPADDRESSTOREMOVE="${_ACTUALNORMALSPLIT[1]}"
+			IP_ADDRESS_HYPHEN=${THEIPADDRESSTOREMOVE//./-}	
+			#updateclusterkillfile
+			sudo vagrant global-status --prune | grep $CLUSTERNAME | grep $IP_ADDRESS_HYPHEN | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt 
+			sudo vagrant global-status --prune | grep $CLUSTERNAME | grep $IP_ADDRESS_HYPHEN | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant destroy -f	
+			sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN
+			sudo sed -i -e s~"$THEIPADDRESSTOREMOVE"~"#$THEIPADDRESSTOREMOVE"~g /etc/hosts						
+		fi	
+	done				
+done
+sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/hosts
+echo "127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1	localhost localhost.localdomain localhost6 localhost6.localdomain6
+" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/hosts > /dev/null
+for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
+    if [ -d "$Config" ]; then
+    	Config=${Config//$BASE/}
+    	Config=${Config//VagVBoxSA/}
+    	Config=${Config//$CLUSTERNAME/}
+    	Config=${Config//Configs/}
+    	Config=${Config//matsya-vagvbox-sa/}
+    	Config=${Config//\//}
+    	Config=${Config//-/.}
+    	Config=${Config//../}
+    	IP_ADDRESS_HYPHEN2=${Config//./-}
+    	echo "$Config	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN2.local" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/hosts > /dev/null    	
+    fi
+done
+sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh I $VAGRANTPSWD $BASE/VagVBoxSA/$CLUSTERNAME/hosts
+sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/hosts
+sudo mv $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec $BASE/matsya-vagvbox-sa-$CLUSTERNAME-execbckup
+sudo touch $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+echo "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc" | sudo tee -a $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec > /dev/null
+sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh I $VAGRANTPSWD
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+sudo mv $BASE/matsya-vagvbox-sa-$CLUSTERNAME-execbckup $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+echo "-------------------------"
+echo ''
+

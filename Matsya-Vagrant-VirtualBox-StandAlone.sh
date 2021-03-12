@@ -178,6 +178,8 @@ sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
 ")
 	echo "$DESTROYCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh > /dev/null	
 	STARTCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
@@ -327,11 +329,19 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z && SSHPORT=\"$RANDOMSSHPORT\" && sudo systemctl stop postfix && sudo systemctl disable postfix && sudo systemctl start firewalld && sudo systemctl enable firewalld && sudo sed -i -e s~\"Port\"~\"#Port\"~g /etc/ssh/sshd_config && echo \"Port \$SSHPORT\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo semanage port -a -t ssh_port_t -p tcp \$SSHPORT && sudo semanage port -l | grep ssh && sudo firewall-cmd --permanent --zone=public --add-port=\$SSHPORT/tcp && sudo firewall-cmd --reload && sudo systemctl restart sshd.service && echo '-----' && sudo lsof -nP -iTCP -sTCP:LISTEN | grep \"COMMAND\|IPv4\" && echo '-----' && sudo netstat -tnlp | grep -v tcp6 && echo '-----'"		
 	done			
 	echo ''
-	sudo cp $BASE/Repo/GlobalPushTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
+	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-NodeAddTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-NodeRemoveTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
+	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
+	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
+	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh			
+	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-GlobalPushTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh	
-	sudo cp $BASE/Repo/GlobalExecTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
+	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-GlobalExecTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh	
@@ -352,6 +362,10 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
 	sudo chmod -R u=rw,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh	
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
+	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh	
 	sudo chown -R root:root $BASE/VagVBoxSA/$CLUSTERNAME/.ports
 	sudo chmod -R u=r,g=,o= $BASE/VagVBoxSA/$CLUSTERNAME/.ports						
 	sudo chmod -R u=r,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
@@ -373,6 +387,8 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	echo "* EXECUTE          => sudo ssh vagrant@$COORDINATOR -p $RANDOMSSHPORT  -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\" \"echo 'Hello From '\$(hostname)\""		
 	echo "* START CLUSTER    => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh"	
 	echo "* STOP CLUSTER     => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh"
+	echo "* ADD NODE         => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh"	
+	echo "* REMOVE NODE      => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh"	
 	echo "* KILL CLUSTER     => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh"
 	echo "* GLOBAL FILE PUSH => sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh I $VAGRANTPWD File_Path_On_Current_System"
 	echo "                      {Params - [1] (I)nclude / (E)xclude Coordinator [2] Password For User => vagrant [3] Full Path Of The Required File}"
