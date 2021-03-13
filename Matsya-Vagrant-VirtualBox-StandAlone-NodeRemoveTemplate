@@ -97,6 +97,7 @@ if [ "$ConfirmDelete" == "" ] || [ "$ConfirmDelete" == "N" ] || [ "$ConfirmDelet
 fi
 read -s -p "Enter Password For User => vagrant > " -e -i "" VAGRANTPSWD
 echo ""
+echo ""
 echo "-------------------------"
 echo ""
 for _CHOICE in "${CHOICELIST[@]}"
@@ -107,7 +108,6 @@ do
 		if [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] || [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] ; then	
 			THEIPADDRESSTOREMOVE="${_ACTUALNORMALSPLIT[1]}"
 			IP_ADDRESS_HYPHEN=${THEIPADDRESSTOREMOVE//./-}	
-			#updateclusterkillfile
 			sudo vagrant global-status --prune | grep $CLUSTERNAME | grep $IP_ADDRESS_HYPHEN | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt 
 			sudo vagrant global-status --prune | grep $CLUSTERNAME | grep $IP_ADDRESS_HYPHEN | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant destroy -f	
 			sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN

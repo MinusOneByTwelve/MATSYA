@@ -266,6 +266,12 @@ sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs
   
   #config.ssh.private_key_path = \"$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem\"
   
+  #config.ssh.port = $RANDOMSSHPORT
+  
+  #config.ssh.host = \"$VMIP\"
+  
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  
   $VMNETWORKADDRESS  
 
   config.disksize.size = '$DEFCONFGDISKSIZE'
@@ -317,7 +323,8 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 			echo ''
 		else
 			sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf /usr/bin/.mtsypswd"									
-		fi						
+		fi
+		sudo -H -u root bash -c "pushd $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3 && sed -i 's/#config.ssh.port/config.ssh.port/' Vagrantfile && sed -i 's/#config.ssh.host/config.ssh.host/' Vagrantfile && popd"								
 		echo '-----------------------'
 		COUNTER=$((COUNTER + 1))
 	done
@@ -330,9 +337,18 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	done			
 	echo ''
 	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-NodeAddTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
-	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
-	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
-	sudo sed -i s#THECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHEBASE#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHECONFIRMPROCEED#$CONFIRMPROCEED#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHEDEFAULTCONFIG#$DEFAULTCONFIG#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHELANTYPE#$LANTYPE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHENIC#$NIC#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHEGATEWAY#$GATEWAY#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHENETMASK#$NETMASK#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHEBASEIP#$BASEIP#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHERANDOMSSHPORT#$RANDOMSSHPORT#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHEADDTOHOSTSFILE#$ADDTOHOSTSFILE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh		
 	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-NodeRemoveTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
 	sudo sed -i s#THEBASELOCATION#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
 	sudo sed -i s#THECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
