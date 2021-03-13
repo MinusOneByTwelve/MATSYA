@@ -23,7 +23,7 @@ LANTYPE="CLUSTERADDTHELANTYPE"
 NIC="CLUSTERADDTHENIC"
 GATEWAY="CLUSTERADDTHEGATEWAY"
 NETMASK="CLUSTERADDTHENETMASK"
-BASEIP="CLUSTERADDTHEBASEIP"
+BASEIP="GETTHATIPPART"
 COORDINATOR="CLUSTERADDTHECOORDINATOR"
 RANDOMSSHPORT="CLUSTERADDTHERANDOMSSHPORT"
 ADDTOHOSTSFILE="CLUSTERADDTHEADDTOHOSTSFILE"
@@ -94,6 +94,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	read -s -p "Enter Password For User => root > " -e -i "" ROOTPWD
 	echo ''
 	echo ''
+	WHENJOBBEGAN=$(echo $(date +%H):$(date +%M))
 	MATSYAPWD=$(sudo ssh vagrant@$COORDINATOR -p $RANDOMSSHPORT  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo cat /usr/bin/.mtsypswd")				
 	echo '-----------------------'
 	echo 'NODES (IP & HOSTNAME)'
@@ -251,7 +252,14 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh I $VAGRANTPWD
 	sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
 	sudo mv $BASE/matsya-vagvbox-sa-$CLUSTERNAME-execbckup $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
-	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts			 			
+	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts
+	WHENJOBFIN=$(echo $(date +%H):$(date +%M))
+	SEC1=`date +%s -d ${WHENJOBBEGAN}`
+	SEC2=`date +%s -d ${WHENJOBFIN}`
+	DIFFSEC=`expr ${SEC2} - ${SEC1}`
+	THETOTALTIMETAKEN=$(echo `date +%M -ud @${DIFFSEC}`)
+	echo "Total Time Taken => $THETOTALTIMETAKEN Minutes"	
+	echo ''							 			
 	echo "=============================================================================="
 	echo ''
 else

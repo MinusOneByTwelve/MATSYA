@@ -99,6 +99,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	echo ''
 	read -p "LAN (*Private OR *Custom) p/c > " -e -i "c" LANTYPE
 	echo ''
+	THEIPBASE=""
 	if [ $LANTYPE == "c" ] || [ $LANTYPE == "C" ] ; then
 		echo '-----------------------'
 		echo 'Network Cards Available'
@@ -121,6 +122,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		IFS='.'
 		read -ra GTWY <<< "$GATEWAY"
 		BASEIP=$(echo "${GTWY[0]}.${GTWY[1]}.${GTWY[2]}.")
+		THEIPBASE=$(echo "${GTWY[0]}.${GTWY[1]}.${GTWY[2]}.")
 		DIFF=$((200-100+1))
 		R=$(($(($RANDOM%$DIFF))+100))
 		read -p "Random Starting IP > $BASEIP" -e -i "$R" STARTRANDOMIP
@@ -129,6 +131,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		DIFF=$((200-100+1))
 		R=$(($(($RANDOM%$DIFF))+100))
 		BASEIP="192.168.50."
+		THEIPBASE="192.168.50."
 		read -p "Random Starting IP > $BASEIP" -e -i "$R" STARTRANDOMIP
 		echo ''													
 	fi
@@ -164,6 +167,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	echo '-----------------------'
 	echo ''	
 	read -p "Add To (/etc/hosts) y/n > " -e -i "y" ADDTOHOSTSFILE	
+	WHENJOBBEGAN=$(echo $(date +%H):$(date +%M))
 	echo ""
 	DESTROYCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
 sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt 
@@ -340,12 +344,12 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	sudo sed -i s#CLUSTERADDTHEBASE#$BASE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHECLUSTERNAME#$CLUSTERNAME#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHECONFIRMPROCEED#$CONFIRMPROCEED#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
-	sudo sed -i s#CLUSTERADDTHEDEFAULTCONFIG#$DEFAULTCONFIG#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#CLUSTERADDTHEDEFAULTCONFIG#"$DEFAULTCONFIG"#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHELANTYPE#$LANTYPE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHENIC#$NIC#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHEGATEWAY#$GATEWAY#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHENETMASK#$NETMASK#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
-	sudo sed -i s#CLUSTERADDTHEBASEIP#$BASEIP#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
+	sudo sed -i s#GETTHATIPPART#"${THEIPBASE}"#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHECOORDINATOR#$COORDINATOR#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHERANDOMSSHPORT#$RANDOMSSHPORT#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 	sudo sed -i s#CLUSTERADDTHEADDTOHOSTSFILE#$ADDTOHOSTSFILE#g $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh		
@@ -412,7 +416,14 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	echo "                      {Params - [1] (I)nclude / (E)xclude Coordinator [2] Password For User => vagrant}"
 	echo "                      {All Commands To Be Executed Can Be Written In $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec File}"							
 	echo '-----------------------'		
-	echo '' 			
+	echo '' 	
+	WHENJOBFIN=$(echo $(date +%H):$(date +%M))
+	SEC1=`date +%s -d ${WHENJOBBEGAN}`
+	SEC2=`date +%s -d ${WHENJOBFIN}`
+	DIFFSEC=`expr ${SEC2} - ${SEC1}`
+	THETOTALTIMETAKEN=$(echo `date +%M -ud @${DIFFSEC}`)
+	echo "Total Time Taken => $THETOTALTIMETAKEN Minutes"	
+	echo ''			
 	echo "=============================================================================="
 	echo ''
 else
