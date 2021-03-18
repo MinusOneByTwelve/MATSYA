@@ -89,7 +89,7 @@ If '$CLUSTERNAME' Appears On Above Commands,Execute
 ==============================================================================
 "
 echo -e "Enter Choice => { (${GREEN}${BOLD}\x1b[4mC${NORM}${NC})onfirm (${RED}${BOLD}\x1b[4mA${NORM}${NC})bort (${YELLOW}${BOLD}\x1b[4mP${NORM}${NC})roceed } c/a/p"
-read -p "> " -e -i "c" CONFIRMPROCEED	
+read -p "> " -e -i "a" CONFIRMPROCEED	
 echo ""
 if [ $CONFIRMPROCEED == "p" ] || [ $CONFIRMPROCEED == "P" ] ; then
 	sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh	
@@ -284,55 +284,59 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo '-----------------------'	
 		echo ''	
 	fi
-	echo "${FINAL_BEFORE_CONNECT_TERMINAL_LIST[*]}"
-
-
-
-
-	pswdddd="Ubuntu@123"
-	(
-	  set -Ee
-	  function _catch {
-	    echo "catch => $1"
-	    exit 0  # optional; use if you don't want to propagate (rethrow) error to outer shell
-	  }
-	  function _finally {
-	    echo 'finally'
-	  }
-	  trap _catch ERR
-	  trap _finally EXIT
-	  dfdffdf=$(sshpass -p "$pswdddd" ssh osboxes@192.168.1.47 "echo 'hello'")
-	  echo 'response-'$dfdffdf > a.txt
-	)
-	echo $dfdffdf
-
-
-	echo '#########################'
-	for((j=0;j<$TerminalsCount;j++))
+	
+	echo '-----------------------'
+	RANDOMFOLDERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+	sudo mkdir -p $BASE/VagVBoxMN/$RANDOMFOLDERNAME
+	sudo chmod -R 777 $BASE/VagVBoxMN/$RANDOMFOLDERNAME
+	pushd $BASE/VagVBoxMN/$RANDOMFOLDERNAME
+	touch $RANDOMFOLDERNAME
+	for Terminal in "${FINAL_BEFORE_CONNECT_TERMINAL_LIST[@]}"
 	do
-		Terminal=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].HostName' $NODES_JSON)
-		Terminal="${Terminal//$DoubleQuotes/$NoQuotes}"
-		TerminalIP=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
-		TerminalIP="${TerminalIP//$DoubleQuotes/$NoQuotes}"
-		echo $Terminal
-		echo $TerminalIP
-		CHECKFORAUTHPROP=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].AuthMode?' $NODES_JSON)
-		echo $CHECKFORAUTHPROP
-		#ssh -q prathamos@$TerminalIP exit
-		#RESULT=$(echo $?)
-		#echo $RESULT
-		#RESULT=$(ssh -o BatchMode=yes -o ConnectTimeout=5 prathamos@$TerminalIP echo ok 2>&1)
-		#echo $RESULT
-		#status=$(ssh -o BatchMode=yes -o ConnectTimeout=5 prathamos@$TerminalIP echo ok 2>&1)
-		#echo $status
-		#if [[ $status == ok ]] ; then
-		#  echo auth ok, do something
-		#elif [[ $status == "Permission denied"* ]] ; then
-		#  echo no_auth
-		#else
-		#  echo other_error
-		#fi		
+		IFS='├' read -r -a TerminalVals <<< $Terminal
+		THEREQUIREDUSER="${TerminalVals[2]}"
+		THEREQUIREDAUTH="${TerminalVals[4]}"
+		THEREQUIREDACCESS="${TerminalVals[5]}"
+		THEREQUIREDPORT="${TerminalVals[3]}"
+		THEREQUIREDIP="${TerminalVals[1]}"
+		THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+		(
+		set -Ee
+		function _catch {
+			echo "ERROR"
+			exit 0
+		}
+		function _finally {
+			abc=xyz
+		}
+		trap _catch ERR
+		trap _finally EXIT
+		if [ $THEREQUIREDAUTH == "PASSWORD" ] || [ $THEREQUIREDAUTH == "PASSWORD" ] ; then
+			THERESPONSE=$(sshpass -p "$THEREQUIREDACCESS" ssh $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" "echo \"$RANDOMFOLDERNAME\"")
+			echo "$Terminal├$THERESPONSE" >> $RANDOMFOLDERNAME		
+		fi
+		if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
+			sudo cp $THEREQUIREDACCESS ThePemFile
+			sudo chmod 777 ThePemFile
+			THERESPONSE=$(ssh -oPasswordAuthentication=no $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" -i ThePemFile "echo \"$RANDOMFOLDERNAME\"")
+			echo "$Terminal├$THERESPONSE" >> $RANDOMFOLDERNAME		
+		fi		
+		)		
 	done	
+	popd
+	echo '-----------------------'	
+	echo ''
+
+	while read LINE; do
+		IFS='├' read -r -a TerminalFullVals <<< $LINE
+		ACCESSTRYRESULT="${TerminalFullVals[6]}"
+		if [ "$ACCESSTRYRESULT" == "$RANDOMFOLDERNAME" ] || [ "$ACCESSTRYRESULT" == "$RANDOMFOLDERNAME" ] ; then
+			FINAL_TERMINAL_LIST+=("$LINE")	
+		fi
+	done < $BASE/VagVBoxMN/$RANDOMFOLDERNAME/$RANDOMFOLDERNAME	
+	sudo rm -rf $BASE/VagVBoxMN/$RANDOMFOLDERNAME
+	
+	echo "${FINAL_TERMINAL_LIST[@]}"
 else
 	echo "Exiting For Now..."
 	echo ''
