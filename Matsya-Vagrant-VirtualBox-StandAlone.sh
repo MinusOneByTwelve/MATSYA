@@ -24,7 +24,7 @@ echo ''
 read -p "Enter Base Location (If Missing, Will Be Created) > " -e -i "/opt/Matsya" BASE
 sudo mkdir -p $BASE/VagVBoxSA
 sudo mkdir -p $BASE/Repo
-ISFA="/opt/Matsya/Repo/KLM15_v1_1_0.box"
+ISFA="$BASE/Repo/KLM15_v1_1_0.box"
 VBOXCHOICE="AUTO"
 if [ -f "$ISFA" ]
 then
