@@ -17,6 +17,7 @@ BOLD=$(tput bold)
 NORM=$(tput sgr0)
 ORANGE='\033[1;33m'
 
+CURRENTUSER=$(whoami)
 DoubleQuotes='"'
 NoQuotes=''
 
@@ -59,7 +60,7 @@ OPTION 2
 	read -p "Enter OPTION 1 OR 2 > " -e -i "2" USERCHOICE
 	echo ''
 	if [ $USERCHOICE == "1" ] || [ $USERCHOICE == "1" ] ; then
-		echo "Exiting For Now...Download & Execute Again."
+		echo "Exiting...Download & Execute Again."
 		echo ''
 		exit
 	else
@@ -157,8 +158,8 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			
 			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort")																			
 		fi
-	done	
-			
+	done
+				
 	GLOBALPASSWORD=""		
 	if [ $AUTHMODE == "PASSWORD" ] || [ $AUTHMODE == "PASSWORD" ] ; then
 		ISSAMEPASSWORD=$(jq '.VagVBoxMN.Cluster.Terminal[0].IsSamePassword' $NODES_JSON)
@@ -168,20 +169,24 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			echo ''		
 			read -s -p "Enter Password For All Terminals > " -e -i "" GLOBALPASSWORD
 			echo ''
+			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
 				CHECKIFTOOMIT=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 				CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
 				if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then
-					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]}'├PASSWORD├'$GLOBALPASSWORD
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PASSWORD├'$GLOBALPASSWORD
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))
 				fi		
 			done
+			THECOUNTKEEPER=0
 			echo ''
 			echo '-----------------------'
 			echo ''							
 		else
 			echo '-----------------------'
 			echo ''
+			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
 				CHECKIFTOOMIT=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
@@ -194,9 +199,11 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					TEMPPASSWORD=""
 					read -s -p "Enter Password For => $Terminal ($TerminalIP) > " -e -i "" TEMPPASSWORD
 					echo ''
-					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]}'├PASSWORD├'$TEMPPASSWORD
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PASSWORD├'$TEMPPASSWORD
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))
 				fi		
 			done
+			THECOUNTKEEPER=0
 			echo ''
 			echo '-----------------------'	
 			echo ''	
@@ -212,19 +219,23 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			echo ''		
 			read -p "Enter .pem File Location For All Terminals > " -e -i "" GLOBALPEM
 			echo ''
+			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
 				CHECKIFTOOMIT=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 				CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
 				if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then
-					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]}'├PEM├'$GLOBALPEM
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PEM├'$GLOBALPEM
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))
 				fi		
 			done
+			THECOUNTKEEPER=0
 			echo '-----------------------'
 			echo ''			
 		else
 			echo '-----------------------'
 			echo ''
+			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
 				CHECKIFTOOMIT=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
@@ -236,9 +247,11 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					TerminalIP="${TerminalIP//$DoubleQuotes/$NoQuotes}"
 					TEMPPEM=""			
 					read -p "Enter .pem File Location For => $Terminal ($TerminalIP) > " -e -i "" TEMPPEM
-					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]}'├PEM├'$TEMPPEM	
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PEM├'$TEMPPEM
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))	
 				fi
 			done
+			THECOUNTKEEPER=0
 			echo ''
 			echo '-----------------------'	
 			echo ''		
@@ -248,6 +261,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	if [ $AUTHMODE == "ANY" ] || [ $AUTHMODE == "ANY" ] ; then
 		echo '-----------------------'
 		echo ''
+		THECOUNTKEEPER=0
 		for((j=0;j<$TerminalsCount;j++))
 		do
 			CHECKIFTOOMIT=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
@@ -268,18 +282,24 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					echo ''										
 					exit				
 				fi
-				if [ $CHECKIFAUTHMODEMISSING == "PASSWORD" ] || [ $CHECKIFAUTHMODEMISSING == "PASSWORD" ] ; then
+				if [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] || [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] ; then
+					TEMPACCESS=""
 					read -s -p "Enter Password For => $Terminal ($TerminalIP) > " -e -i "" TEMPACCESS
 					echo ''	
-					TEMPACCESS='PASSWORD├'$TEMPACCESS									
+					TEMPACCESS='PASSWORD├'$TEMPACCESS
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├'$TEMPACCESS
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))									
 				fi
-				if [ $CHECKIFAUTHMODEMISSING == "PEM" ] || [ $CHECKIFAUTHMODEMISSING == "PEM" ] ; then
+				if [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] || [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] ; then
+					TEMPACCESS=""
 					read -p "Enter .pem File Location For => $Terminal ($TerminalIP) > " -e -i "" TEMPACCESS	
-					TEMPACCESS='PEM├'$TEMPACCESS									
-				fi
-				FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${j}]}'├'$TEMPACCESS																
+					TEMPACCESS='PEM├'$TEMPACCESS
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├'$TEMPACCESS
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))														
+				fi																				
 			fi
 		done
+		THECOUNTKEEPER=0
 		echo ''
 		echo '-----------------------'	
 		echo ''	
@@ -312,13 +332,14 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		trap _catch ERR
 		trap _finally EXIT
 		if [ $THEREQUIREDAUTH == "PASSWORD" ] || [ $THEREQUIREDAUTH == "PASSWORD" ] ; then
-			THERESPONSE=$(sshpass -p "$THEREQUIREDACCESS" ssh $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" "echo \"$RANDOMFOLDERNAME\"")
+			THERESPONSE=$(sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" "echo \"$RANDOMFOLDERNAME\"")
 			echo "$Terminal├$THERESPONSE" >> $RANDOMFOLDERNAME		
 		fi
 		if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
 			sudo cp $THEREQUIREDACCESS ThePemFile
-			sudo chmod 777 ThePemFile
-			THERESPONSE=$(ssh -oPasswordAuthentication=no $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" -i ThePemFile "echo \"$RANDOMFOLDERNAME\"")
+			sudo chown $CURRENTUSER:$CURRENTUSER ThePemFile
+			sudo chmod 400 ThePemFile
+			THERESPONSE=$(ssh -o ConnectTimeout=15 -o BatchMode=yes -o PasswordAuthentication=no $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" -i ThePemFile "echo \"$RANDOMFOLDERNAME\"")
 			echo "$Terminal├$THERESPONSE" >> $RANDOMFOLDERNAME		
 		fi		
 		)		
@@ -335,10 +356,41 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		fi
 	done < $BASE/VagVBoxMN/$RANDOMFOLDERNAME/$RANDOMFOLDERNAME	
 	sudo rm -rf $BASE/VagVBoxMN/$RANDOMFOLDERNAME
+
+	clear
 	
-	echo "${FINAL_TERMINAL_LIST[@]}"
+	echo -e "${ORANGE}==============================================================================${NC}"
+	echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
+	echo -e "${GREEN}==============================================================================${NC}"
+	echo ''
+	echo -e "\x1b[3m\x1b[4mVAGRANT VIRTUALBOX MULTINODE\x1b[m"
+	echo ''
+		
+	echo '-----------------------'
+	echo -e "${BOLD}TERMINALS AVAILABLE${NORM}"
+	echo '-----------------------'
+	COUNTERe=1
+	for Terminal in "${FINAL_TERMINAL_LIST[@]}"
+	do
+		IFS='├' read -r -a TerminalVals <<< $Terminal
+		THEREQUIREDIP="${TerminalVals[1]}"
+		THEREQUIREDHOSTNAME="${TerminalVals[0]}"		
+		echo "($COUNTERe) $THEREQUIREDHOSTNAME / $THEREQUIREDIP"
+		COUNTERe=$((COUNTERe + 1)) 
+	done
+	echo '-----------------------'	
+	echo ''
+	read -p "Confirm (y/n) > " -e -i "n" ReadyToGo
+	echo ''	
+	if [ $ReadyToGo == "y" ] || [ $ReadyToGo == "Y" ] ; then
+		echo 'gamebegins'
+	else
+		echo "Exiting..."
+		echo ''	
+		exit
+	fi	
 else
-	echo "Exiting For Now..."
+	echo "Exiting ..."
 	echo ''
 	exit
 fi			
