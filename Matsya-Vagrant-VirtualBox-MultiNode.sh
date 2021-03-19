@@ -110,6 +110,9 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	GLOBALSSHPORT=$(jq '.VagVBoxMN.Cluster.Terminal[0].SSHPort' $NODES_JSON)
 	GLOBALSSHPORT="${GLOBALSSHPORT//$DoubleQuotes/$NoQuotes}"	
 
+	GLOBALOS=$(jq '.VagVBoxMN.Cluster.Terminal[0].OS' $NODES_JSON)
+	GLOBALOS="${GLOBALOS//$DoubleQuotes/$NoQuotes}"
+	
 	FINAL_BEFORE_CONNECT_TERMINAL_LIST=()
 	FINAL_TERMINAL_LIST=()
 						
@@ -120,7 +123,8 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		TerminalIP=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
 		TerminalIP="${TerminalIP//$DoubleQuotes/$NoQuotes}"
 		TerminalUserName=""
-		TerminalSSHPort=""	
+		TerminalSSHPort=""
+		TerminalTheRqOS=""	
 		CHECKIFTOOMIT=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 		CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
 		if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then			
@@ -156,7 +160,23 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 				TerminalSSHPort="$CHECKIFSSHPORTMISSING"							
 			fi
 			
-			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort")																			
+			CHECKIFOSMISSING=$(jq '.VagVBoxMN.Cluster.Terminals['${j}'].OS?' $NODES_JSON)
+			CHECKIFOSMISSING="${CHECKIFOSMISSING//$DoubleQuotes/$NoQuotes}"
+			if [ "$CHECKIFOSMISSING" == "null" ] || [ "$CHECKIFOSMISSING" = "" ] ; then
+				if [ "$GLOBALOS" == "" ] || [ "$GLOBALOS" == "" ] ; then			
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'OS' Missing In '$NODES_JSON' For Terminal => $Terminal ($TerminalIP)"
+					echo '-----------------------'
+					echo ''
+					exit
+				else
+					TerminalTheRqOS="$GLOBALOS"
+				fi
+			else
+				TerminalTheRqOS="$CHECKIFOSMISSING"							
+			fi			
+			
+			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS")																			
 		fi
 	done
 				
@@ -315,8 +335,8 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	do
 		IFS='├' read -r -a TerminalVals <<< $Terminal
 		THEREQUIREDUSER="${TerminalVals[2]}"
-		THEREQUIREDAUTH="${TerminalVals[4]}"
-		THEREQUIREDACCESS="${TerminalVals[5]}"
+		THEREQUIREDAUTH="${TerminalVals[5]}"
+		THEREQUIREDACCESS="${TerminalVals[6]}"
 		THEREQUIREDPORT="${TerminalVals[3]}"
 		THEREQUIREDIP="${TerminalVals[1]}"
 		THEREQUIREDHOSTNAME="${TerminalVals[0]}"
@@ -350,7 +370,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 
 	while read LINE; do
 		IFS='├' read -r -a TerminalFullVals <<< $LINE
-		ACCESSTRYRESULT="${TerminalFullVals[6]}"
+		ACCESSTRYRESULT="${TerminalFullVals[7]}"
 		if [ "$ACCESSTRYRESULT" == "$RANDOMFOLDERNAME" ] || [ "$ACCESSTRYRESULT" == "$RANDOMFOLDERNAME" ] ; then
 			FINAL_TERMINAL_LIST+=("$LINE")	
 		fi
@@ -383,7 +403,70 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	read -p "Confirm (y/n) > " -e -i "n" ReadyToGo
 	echo ''	
 	if [ $ReadyToGo == "y" ] || [ $ReadyToGo == "Y" ] ; then
-		echo 'gamebegins'
+		RANDOMUSERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+		RANDOMPASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+		echo "$RANDOMUSERNAME-$RANDOMPASSWORD"
+		echo '-----------------------'
+		echo 'NEW SSH KEYS'
+		echo '-----------------------'		
+		sudo mkdir -p $BASE/VagVBoxMN/$CLUSTERNAME/Keys
+		sudo -H -u root bash -c "cd $BASE/VagVBoxMN/$CLUSTERNAME/Keys && echo -e  'y\n'|ssh-keygen -b 2048 -t rsa -P '' -f id_rsa && cat id_rsa.pub >> authorized_keys && cp id_rsa matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem && puttygen matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem -o matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk && cd ~"
+		sudo rm -rf $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem
+		sudo rm -rf $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk
+		sudo mv $BASE/VagVBoxMN/$CLUSTERNAME/Keys/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem $BASE
+		sudo mv $BASE/VagVBoxMN/$CLUSTERNAME/Keys/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk $BASE
+		sudo chmod u=rwx,g=rx,o=rx $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem
+		sudo chmod u=rwx,g=rx,o=rx $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk
+		sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/Keys/authorized_keys
+		sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa	
+		sudo chown -R root:root $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub
+		sudo chmod -R u=rx,g=,o= $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub
+		echo ''
+		sudo mv $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub
+		sudo -H -u root bash -c "cd $BASE/VagVBoxMN/$CLUSTERNAME/Keys && echo -e  'y\n'|ssh-keygen -b 2048 -t rsa -P '' -f id_rsa && cat id_rsa.pub >> authorized_keys && cp id_rsa matsya-vagvbox-mn-$CLUSTERNAME.pem && puttygen matsya-vagvbox-mn-$CLUSTERNAME.pem -o matsya-vagvbox-mn-$CLUSTERNAME.ppk && cd ~"
+		sudo rm -rf $BASE/matsya-vagvbox-mn-$CLUSTERNAME.pem
+		sudo rm -rf $BASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk
+		sudo mv $BASE/VagVBoxMN/$CLUSTERNAME/Keys/matsya-vagvbox-mn-$CLUSTERNAME.pem $BASE
+		sudo mv $BASE/VagVBoxMN/$CLUSTERNAME/Keys/matsya-vagvbox-mn-$CLUSTERNAME.ppk $BASE
+		sudo chmod u=rwx,g=rx,o=rx $BASE/matsya-vagvbox-mn-$CLUSTERNAME.pem
+		sudo chmod u=rwx,g=rx,o=rx $BASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk
+		sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/Keys/authorized_keys
+		sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa	
+		sudo chown -R root:root $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub
+		sudo chmod -R u=rx,g=,o= $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub				
+		echo '-----------------------'
+		echo ''
+		echo '-----------------------'
+		for Terminal in "${FINAL_TERMINAL_LIST[@]}"
+		do
+			IFS='├' read -r -a TerminalVals <<< $Terminal
+			THEREQUIREDUSER="${TerminalVals[2]}"
+			THEREQUIREDAUTH="${TerminalVals[5]}"
+			THEREQUIREDACCESS="${TerminalVals[6]}"
+			THEREQUIREDPORT="${TerminalVals[3]}"
+			THEREQUIREDIP="${TerminalVals[1]}"
+			THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+			THEREQUIREDOS="${TerminalVals[4]}"
+			RANDOMFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-MultiNode-FirstConnectTemplate $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
+			sudo sed -i s#THENAMEOFTHEUSER#$RANDOMUSERNAME#g $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
+			sudo sed -i s#THEPASSWORDFORTHEUSER#$RANDOMPASSWORD#g $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
+			sudo sed -i s#OSNAMETOBEUSED#$THEREQUIREDOS#g $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
+			sudo chmod 777 $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME		
+			if [ $THEREQUIREDAUTH == "PASSWORD" ] || [ $THEREQUIREDAUTH == "PASSWORD" ] ; then
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOMFILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOMFILENAME && rm -rf $RANDOMFILENAME"
+				sudo cat $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub | sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "cat >> /home/$THEREQUIREDUSER/.ssh/authorized_keys"		
+			fi
+			if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
+				sudo cp $THEREQUIREDACCESS ThePemFile
+				sudo chown $CURRENTUSER:$CURRENTUSER ThePemFile
+				sudo chmod 400 ThePemFile				
+			fi
+			sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME						
+		done
+		echo '-----------------------'
+		echo ''								
 	else
 		echo "Exiting..."
 		echo ''	

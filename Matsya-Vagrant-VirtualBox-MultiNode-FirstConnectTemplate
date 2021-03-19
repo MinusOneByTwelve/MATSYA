@@ -1,0 +1,32 @@
+#!/bin/bash
+
+clear
+
+RANDOMUSERNAME="THENAMEOFTHEUSER"
+RANDOMPASSWORD="THEPASSWORDFORTHEUSER"
+THEOSNAME="OSNAMETOBEUSED"
+
+if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
+	sudo useradd -s /bin/bash -m $RANDOMUSERNAME
+	sudo usermod -p $(echo "$RANDOMPASSWORD" | openssl passwd -1 -stdin) $RANDOMUSERNAME
+	sudo usermod -aG sudo $RANDOMUSERNAME
+	sudo rm -f /etc/sudoers.d/$RANDOMUSERNAME-user
+	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user
+	
+	sudo apt-get install -y jq ssh sshpass virtualbox curl wget 
+	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+	sudo rm -rf /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list
+	echo "deb [arch=amd64] https://apt.releases.hashicorp.com groovy main" | sudo tee /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list	 
+	sudo apt-get install -y vagrant
+	sudo vagrant plugin install vagrant-vbguest 
+	sudo vagrant plugin install vagrant-disksize		
+fi
+
+if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then
+	sudo useradd -m $RANDOMUSERNAME
+	sudo usermod -p $(echo "$RANDOMPASSWORD" | openssl passwd -1 -stdin) $RANDOMUSERNAME
+	sudo usermod -aG sudo $RANDOMUSERNAME
+	sudo rm -f /etc/sudoers.d/$RANDOMUSERNAME-user
+	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user		
+fi
+
