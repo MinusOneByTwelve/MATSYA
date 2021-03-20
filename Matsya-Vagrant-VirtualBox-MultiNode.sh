@@ -74,8 +74,15 @@ OPTION 2
 		fi
 	fi
 fi
+
 CLUSTERNAME=$(jq '.VagVBoxMN.Cluster.Info[0].Name' $NODES_JSON)
 CLUSTERNAME="${CLUSTERNAME//$DoubleQuotes/$NoQuotes}"
+if [ "$CLUSTERNAME" == "" ] || [ "$CLUSTERNAME" == "" ] ; then
+UUID=$(uuidgen)
+UUIDREAL=${UUID:1:6}
+CLUSTERNAME=$UUIDREAL
+fi
+
 echo "==============================================================================
 
 *To Avoid Conflict Later...Open Another Terminal & Execute
@@ -422,7 +429,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	if [ $ReadyToGo == "y" ] || [ $ReadyToGo == "Y" ] ; then
 		RANDOMUSERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 		RANDOMPASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-		echo "$RANDOMUSERNAME-$RANDOMPASSWORD"
+		
 		echo '-----------------------'
 		echo 'NEW SSH KEYS'
 		echo '-----------------------'		
@@ -454,6 +461,12 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo '-----------------------'
 		echo ''
 		echo '-----------------------'
+		sudo chmod 777 $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem
+		sudo chmod 777 $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk
+		sudo chmod 777 $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub
+		sudo chmod 777 $BASE/matsya-vagvbox-mn-$CLUSTERNAME.pem
+		sudo chmod 777 $BASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk
+		sudo chmod 777 $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub		
 		for Terminal in "${FINAL_TERMINAL_LIST[@]}"
 		do
 			IFS='├' read -r -a TerminalVals <<< $Terminal
@@ -464,7 +477,11 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			THEREQUIREDIP="${TerminalVals[1]}"
 			THEREQUIREDHOSTNAME="${TerminalVals[0]}"
 			THEREQUIREDOS="${TerminalVals[4]}"
-			THEREQUIREDBASE="${TerminalVals[5]}"
+			THEREQUIREDBASE="${TerminalVals[5]}"		
+			echo ''
+			echo '~~~~~~~~~~~~~~~~~~~~~~~'
+			echo "$THEREQUIREDHOSTNAME ($THEREQUIREDIP) $RANDOMUSERNAME-$RANDOMPASSWORD"
+			echo '~~~~~~~~~~~~~~~~~~~~~~~'
 			RANDOMFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-MultiNode-FirstConnectTemplate $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
 			sudo sed -i s#THENAMEOFTHEUSER#$RANDOMUSERNAME#g $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
@@ -486,8 +503,24 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
 					sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
 					sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+					sudo touch $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME
+					sudo chmod 777 $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME
+					echo "sudo mv matsya-vagvbox-mn-$CLUSTERNAME.pem $THEREQUIREDBASE" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo mv matsya-vagvbox-mn-$CLUSTERNAME.ppk $THEREQUIREDBASE" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo mv matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem $THEREQUIREDBASE" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo mv matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk $THEREQUIREDBASE" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo mv id_rsa.pub $THEREQUIREDBASE/VagVBoxMN/$CLUSTERNAME/Keys" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo mv id_rsa_terminal.pub $THEREQUIREDBASE/VagVBoxMN/$CLUSTERNAME/Keys" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo chown root:root $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem && sudo chmod u=r,g=,o= $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo chown root:root $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk && sudo chmod u=r,g=,o= $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo chown root:root $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME.pem && sudo chmod u=r,g=,o= $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME.pem" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo chown root:root $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk && sudo chmod u=r,g=,o= $THEREQUIREDBASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo chown root:root $THEREQUIREDBASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub && sudo chmod -R u=rx,g=,o= $THEREQUIREDBASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo chown root:root $THEREQUIREDBASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub && sudo chmod -R u=rx,g=,o= $THEREQUIREDBASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub" | sudo tee -a $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null					
 					sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
-					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOM2FILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOM2FILENAME && rm -rf $RANDOM2FILENAME"	
+					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOM2FILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOM2FILENAME && rm -rf $RANDOM2FILENAME"
+					sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOM2FILENAME
+					echo ''	
 				fi		
 			fi
 			if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
@@ -495,8 +528,16 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 				sudo chown $CURRENTUSER:$CURRENTUSER ThePemFile
 				sudo chmod 400 ThePemFile				
 			fi
-			sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME						
+			sudo rm -rf $BASE/VagVBoxMN/$CLUSTERNAME/$RANDOMFILENAME
+			echo '~~~~~~~~~~~~~~~~~~~~~~~'						
 		done
+		sudo chmod u=r,g=,o= $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.pem
+		sudo chmod u=r,g=,o= $BASE/matsya-vagvbox-mn-$CLUSTERNAME-terminal.ppk
+		sudo chmod -R u=rx,g=,o= $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub
+		sudo chmod u=r,g=,o= $BASE/matsya-vagvbox-mn-$CLUSTERNAME.pem
+		sudo chmod u=r,g=,o= $BASE/matsya-vagvbox-mn-$CLUSTERNAME.ppk
+		sudo chmod -R u=rx,g=,o= $BASE/VagVBoxMN/$CLUSTERNAME/Keys/id_rsa.pub		
+		echo ''		
 		echo '-----------------------'
 		echo ''								
 	else
