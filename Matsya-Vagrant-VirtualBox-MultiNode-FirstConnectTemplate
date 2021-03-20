@@ -9,16 +9,18 @@ THEBASENAME="BASENAMETOBEUSED"
 THECLUSTERNAME="CLUSTERNAMETOBEUSED"
 
 if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
-	sudo useradd -s /bin/bash -m $RANDOMUSERNAME
+	sudo mkdir -p $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/Keys
+	sudo mkdir -p $THEBASENAME/Repo
+	sudo useradd -d $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
 	sudo usermod -p $(echo "$RANDOMPASSWORD" | openssl passwd -1 -stdin) $RANDOMUSERNAME
 	sudo usermod -aG sudo $RANDOMUSERNAME
 	sudo rm -f /etc/sudoers.d/$RANDOMUSERNAME-user
 	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user > /dev/null
-	sudo mkdir -p /home/$RANDOMUSERNAME/.ssh
-	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME /home/$RANDOMUSERNAME/.ssh
-	sudo chmod -R u=rwx,g=,o= /home/$RANDOMUSERNAME/.ssh
-	sudo mkdir -p $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/Keys
-	sudo mkdir -p $THEBASENAME/Repo				
+	sudo mkdir -p $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chmod -R u=rwx,g=,o= $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME
+	sudo chmod -R u=rwx,g=,o= $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME				
 	
 	sudo apt-get install -y jq ssh sshpass virtualbox curl wget 
 	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
@@ -30,15 +32,17 @@ if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
 fi
 
 if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then
-	sudo useradd -s /bin/bash -m $RANDOMUSERNAME
+	sudo mkdir -p $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/Keys
+	sudo mkdir -p $THEBASENAME/Repo
+	sudo useradd -d $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
 	sudo usermod -p $(echo "$RANDOMPASSWORD" | openssl passwd -1 -stdin) $RANDOMUSERNAME
 	sudo usermod -aG sudo $RANDOMUSERNAME
 	sudo rm -f /etc/sudoers.d/$RANDOMUSERNAME-user
 	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user > /dev/null
-	sudo mkdir -p /home/$RANDOMUSERNAME/.ssh
-	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME /home/$RANDOMUSERNAME/.ssh
-	sudo chmod -R u=rwx,g=,o= /home/$RANDOMUSERNAME/.ssh
-	sudo mkdir -p $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/Keys
-	sudo mkdir -p $THEBASENAME/Repo			
+	sudo mkdir -p $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chmod -R u=rwx,g=,o= $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME
+	sudo chmod -R u=rwx,g=,o= $THEBASENAME/VagVBoxMN/$THECLUSTERNAME/$RANDOMUSERNAME				
 fi
 
