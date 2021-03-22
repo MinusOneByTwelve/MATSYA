@@ -8,7 +8,7 @@ THEOSNAME="OSNAMETOBEUSED"
 THEBASENAME="BASENAMETOBEUSED"
 THECLUSTERNAME="CLUSTERNAMETOBEUSED"
 
-if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -20,29 +20,34 @@ if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
 	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
 	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
 	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME				
-	
-	sudo apt-get install -y jq ssh sshpass virtualbox curl wget 
-	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-	sudo rm -rf /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list
-	echo "deb [arch=amd64] https://apt.releases.hashicorp.com groovy main" | sudo tee /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list > /dev/null	 
-	sudo apt-get install -y vagrant
-	#sudo vagrant plugin install vagrant-vbguest 
-	#sudo vagrant plugin install vagrant-disksize		
+	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
 fi
 
-if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then
-	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
-	sudo mkdir -p $THEBASENAME/Repo
-	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
-	sudo usermod -p $(echo "$RANDOMPASSWORD" | openssl passwd -1 -stdin) $RANDOMUSERNAME
-	sudo usermod -aG sudo $RANDOMUSERNAME
-	sudo rm -f /etc/sudoers.d/$RANDOMUSERNAME-user
-	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user > /dev/null
-	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
-	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
-	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME				
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
+	sudo apt-get install -y jq ssh sshpass curl wget heartbeat haproxy apt-transport-https ca-certificates curl gnupg gnupg2 software-properties-common lsb-release gnupg-agent
+fi
+
+if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] ; then
+	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+	sudo rm -rf /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list
+	echo "deb [arch=amd64] https://apt.releases.hashicorp.com groovy main" | sudo tee /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list > /dev/null
+	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg	
+	sudo rm -rf /etc/apt/sources.list.d/docker.list 
+	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world
+fi
+
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "DEB" ] ; then
+	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+	sudo rm -rf /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-buster.list
+	echo "deb [arch=amd64] https://apt.releases.hashicorp.com buster main" | sudo tee /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-buster.list > /dev/null	 
+	curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+	sudo rm -rf /etc/apt/sources.list.d/docker.list
+	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world	
+fi
+
+if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then	
+	sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world 					
 fi
 
