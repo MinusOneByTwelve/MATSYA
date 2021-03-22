@@ -23,7 +23,7 @@ if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ]
 	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
 fi
 
-if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "E2E7" ] ; then
+if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] ; then
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -49,6 +49,38 @@ if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "E2E7" ] ; then
 	sudo yum install -y terraform
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+	sudo yum install -y docker-ce docker-ce-cli containerd.io && sudo systemctl start docker && sudo docker run hello-world
+	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
+	echo "[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
+	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+	sudo systemctl enable --now kubelet
+	sudo sed -i "s/GSSAPIAuthentication/#GSSAPIAuthentication/g" /etc/ssh/sshd_config
+	sudo sed -i "s/GSSAPICleanupCredentials/#GSSAPICleanupCredentials/g" /etc/ssh/sshd_config
+	sudo sed -i "s/AuthorizedKeysFile/#AuthorizedKeysFile/g" /etc/ssh/sshd_config
+	echo "AuthorizedKeysFile %h/.ssh/authorized_keys" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+	sudo systemctl restart sshd
+	sudo systemctl status sshd
+fi
+
+if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "CT8" ] ; then
+	sudo setenforce 0
+	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+	sudo yum -y install epel-release
+	sudo sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/CentOS-HA.repo
+	sudo yum install -y jq openssh-server openssh-clients sshpass curl wget haproxy ca-certificates curl gnupg gnupg2 corosync pcs pacemaker haproxy haveged
+	sudo yum install -y yum-utils
+	sudo rm -rf /etc/yum.repos.d/hashicorp.repo
+	release="RHEL" && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
+	sudo yum install -y terraform
+	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
+	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
 	sudo yum install -y docker-ce docker-ce-cli containerd.io && sudo systemctl start docker && sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
