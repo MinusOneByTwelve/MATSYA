@@ -49,7 +49,7 @@ if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "E2E7" ] ; then
 	sudo yum install -y terraform
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-	sudo yum install -y docker-ce docker-ce-cli containerd.io && sudo systemctl start docker && sudo docker run hello-world
+	sudo yum install -y docker-ce docker-ce-cli containerd.io && sudo systemctl enable docker && sudo systemctl start docker && sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
@@ -81,7 +81,8 @@ if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "CT8" 
 	sudo yum install -y terraform
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-	sudo yum install -y docker-ce docker-ce-cli containerd.io && sudo systemctl start docker && sudo docker run hello-world
+	sudo yum remove buildah* -y && sudo yum remove podman* -y && VERSION=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | grep tag_name | cut -d '"' -f 4 | sed -e "s#v##") && URL='https://download.docker.com/linux/centos/8/x86_64/stable/Packages/'$(wget -q -O- https://download.docker.com/linux/centos/8/x86_64/stable/Packages/ | grep href | grep .el8.x86_64.rpm | grep containerd.io- | grep $VERSION | sed -e "s#<a href=\"##" | sort -r | head -n1 | awk '{split($0,a,">"); print a[1]}' | sed -e "s#\"##") && sudo yum install -y $URL
+	sudo yum install -y docker-ce docker-ce-cli && sudo systemctl enable docker && sudo systemctl start docker && sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
