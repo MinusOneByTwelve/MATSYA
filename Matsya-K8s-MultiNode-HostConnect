@@ -42,7 +42,7 @@ while read Terminal; do
 	THEREQUIREDIP="${TerminalVals[1]}"
 	THEREQUIREDHOSTNAME="${TerminalVals[0]}"
 	THEREQUIREDLAN="${TerminalVals[2]}"
-	if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "GCP" ] || [ $THEOSNAME == "AZR" ] || [ $THEOSNAME == "CLD" ] ; then
+	if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "GCP" ] || [ $THEOSNAME == "AZR" ] || [ $THEOSNAME == "CLD" ] || [ $THEOSNAME == "E2E7" ] ; then
 		if [ $THEREQUIREDLAN == "PUBLIC" ] || [ $THEOSNAME == "PUBLIC" ] ; then			
 			echo "($COUNTERe) $THEREQUIREDHOSTNAME / $THEREQUIREDIP"
 			COUNTERe=$((COUNTERe + 1))
