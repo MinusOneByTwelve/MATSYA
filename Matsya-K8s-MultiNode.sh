@@ -513,7 +513,8 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			sudo sed -i s#OSNAMETOBEUSED#$THEREQUIREDOS#g $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME
 			sudo sed -i s#BASENAMETOBEUSED#$THEREQUIREDBASE#g $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME
 			sudo sed -i s#CLUSTERNAMETOBEUSED#$CLUSTERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME
-			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME				
+			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME
+							
 			RANDOM4FILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostConnectTemplate $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME
 			sudo sed -i s#THENAMEOFTHEUSER#$RANDOMUSERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME
@@ -521,7 +522,23 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			sudo sed -i s#BASENAMETOBEUSED#$THEREQUIREDBASE#g $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME
 			sudo sed -i s#CLUSTERNAMETOBEUSED#$CLUSTERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME
 			sudo sed -i s#USERSELIGIBLE#"$CURRENTUSER├$RANDOMUSERNAME"#g $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME		
-			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME																			
+			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME
+			
+			RND1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostAddTemplate $BASE/K8sMN/$CLUSTERNAME/$RND1
+			RND2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostExecTemplate $BASE/K8sMN/$CLUSTERNAME/$RND2
+			RND3=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostKillTemplate $BASE/K8sMN/$CLUSTERNAME/$RND3
+			RND4=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostPullTemplate $BASE/K8sMN/$CLUSTERNAME/$RND4
+			RND5=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostPushTemplate $BASE/K8sMN/$CLUSTERNAME/$RND5
+			RND6=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostRemoveTemplate $BASE/K8sMN/$CLUSTERNAME/$RND6
+			RND7=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostSyncTemplate $BASE/K8sMN/$CLUSTERNAME/$RND7
+																						
 			RANDOM3FILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/K8sMN/$CLUSTERNAME/ListOfHosts $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME
 			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME					
@@ -530,8 +547,31 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOMFILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOMFILENAME && rm -rf $RANDOMFILENAME"								
 				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
 				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOM3FILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOM3FILENAME && rm -rf $RANDOM3FILENAME"				
+				
 				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
 				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RANDOM4FILENAME $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-connect.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-connect.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-connect.sh"								
+				
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND1 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND1 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-add.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-add.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-add.sh"								
+
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND2 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND2 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-exec.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-exec.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-exec.sh"								
+				
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND3 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND3 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-kill.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-kill.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-kill.sh"								
+
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND4 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND4 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-pull.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-pull.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-pull.sh"								
+
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND5 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND5 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-push.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-push.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-push.sh"								
+
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND6 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND6 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-remove.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-remove.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-remove.sh"								
+
+				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RND7 $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RND7 $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-sync.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-sync.sh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=rx,g=rx,o=rx $THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-sync.sh"								
+						
 				sudo cat $BASE/K8sMN/$CLUSTERNAME/Keys/id_rsa_terminal.pub | sshpass -p "$RANDOMPASSWORD" ssh -o ConnectTimeout=15 $RANDOMUSERNAME@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "cat >> $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/.ssh/authorized_keys"
 				THEFILERESPONSE=$(sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "[ -f \"$THEREQUIREDBASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem\" ] && echo 'YES' || echo 'NO'")
 				if [ $THEFILERESPONSE == "NO" ] || [ $THEFILERESPONSE == "NO" ] ; then
@@ -576,6 +616,13 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME
 			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME
 			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RANDOM4FILENAME
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND1
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND3
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND4
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND5
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND6
+			sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RND7
 			echo '~~~~~~~~~~~~~~~~~~~~~~~'						
 		done
 		sudo chmod u=r,g=,o= $BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem
@@ -636,20 +683,19 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo '-----'		
 		echo "* SSH KEY LOGIN      => $BASE/matsya-k8s-mn-$CLUSTERNAME-connect.sh"
 		echo '-----'		        
-		echo "* FILE PUSH          => scp -P PORT -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem\" FileOnLocalSystem $RANDOMUSERNAME@TERMINAL:$BASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME"
+		echo "* FILE PUSH          => $BASE/matsya-k8s-mn-$CLUSTERNAME-push.sh"
 		echo '-----'		
-		echo "* FILE PULL          => scp -P PORT -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem\" $RANDOMUSERNAME@TERMINAL:$BASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/RequiredFile LocalLocation"
+		echo "* FILE PULL          => $BASE/matsya-k8s-mn-$CLUSTERNAME-pull.sh"
 		echo '-----'		
-		echo "* EXECUTE            => ssh -p PORT -o \"StrictHostKeyChecking=no\" -i \"$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem\" $RANDOMUSERNAME@TERMINAL \"echo 'Hello From '\$(hostname)\""		
+		echo "* EXECUTE            => $BASE/matsya-k8s-mn-$CLUSTERNAME-exec.sh"
 		echo '-----'		
-		echo "* ADD TERMINAL       => sudo $BASE/matsya-k8s-mn-$CLUSTERNAME-add.sh"	
-		echo "* REMOVE TERMINAL    => sudo $BASE/matsya-k8s-mn-$CLUSTERNAME-remove.sh"	
-		echo "* DISBAND FELLOWSHIP => sudo $BASE/matsya-k8s-mn-$CLUSTERNAME-kill.sh"
-		echo "* GLOBAL FILE PUSH   => sudo $BASE/matsya-k8s-mn-$CLUSTERNAME-push.sh I $VAGRANTPWD File_Path_On_Current_System"
-		echo "                        {Params - [1] (I)nclude / (E)xclude Coordinator [2] Password For User => vagrant [3] Full Path Of The Required File}"
-		echo "* GLOBAL EXECUTE     => sudo $BASE/matsya-k8s-mn-$CLUSTERNAME-exec.sh I $VAGRANTPWD"
-		echo "                        {Params - [1] (I)nclude / (E)xclude Coordinator [2] Password For User => vagrant}"
-		echo "                        {All Commands To Be Executed Can Be Written In $BASE/matsya-k8s-mn-$CLUSTERNAME-exec File}"							
+		echo "* ADD TERMINAL       => $BASE/matsya-k8s-mn-$CLUSTERNAME-add.sh"
+		echo '-----'	
+		echo "* REMOVE TERMINAL    => $BASE/matsya-k8s-mn-$CLUSTERNAME-remove.sh"
+		echo '-----'
+		echo "* SYNC TERMINAL      => $BASE/matsya-k8s-mn-$CLUSTERNAME-sync.sh"
+		echo '-----'			
+		echo "* DISBAND FELLOWSHIP => $BASE/matsya-k8s-mn-$CLUSTERNAME-kill.sh"							
 		echo '-----------------------'		
 		echo '' 	
 		WHENJOBFIN=$(echo $(date +%H):$(date +%M))

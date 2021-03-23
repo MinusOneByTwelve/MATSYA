@@ -177,3 +177,9 @@ else
 	sudo swapoff -a					
 fi
 
+sudo rm -rf $THEBASENAME/K8sMN/$THECLUSTERNAME/.Sync
+SYNCDATE=$(TZ=Asia/Kolkata date '+%F %T')
+echo "$SYNCDATE" | sudo tee $THEBASENAME/K8sMN/$THECLUSTERNAME/.Sync
+sudo chown $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/.Sync
+sudo chmod u=r,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/.Sync
+
