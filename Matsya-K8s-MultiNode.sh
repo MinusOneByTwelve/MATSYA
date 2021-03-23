@@ -34,46 +34,6 @@ BASE=$(jq '.K8sMN.Cluster.Terminal[0].BaseLocation' $NODES_JSON)
 BASE="${BASE//$DoubleQuotes/$NoQuotes}"
 sudo mkdir -p $BASE/K8sMN
 sudo mkdir -p $BASE/Repo
-ISFA="$BASE/Repo/KLM15_v1_1_0.box"
-VBOXCHOICE="AUTO"
-if [ -f "$ISFA" ]
-then
-	VBOXCHOICE="MANUAL"
-else
-	echo "
-==============================================================================
-
-*Vagrant VirtualBox Missing...
---------
-OPTION 1
---------
-*Download From Here => https://bit.ly/MatsyaKLM15VagVBox
-   * Copy To $BASE/Repo
-   * Rename To KLM15_v1_1_0.box
---------
-OPTION 2
--------- 
-*Automatic Download & Configuration  
-
-==============================================================================
-"
-	read -p "Enter OPTION 1 OR 2 > " -e -i "2" USERCHOICE
-	echo ''
-	if [ $USERCHOICE == "1" ] || [ $USERCHOICE == "1" ] ; then
-		echo "Exiting...Download & Execute Again."
-		echo ''
-		exit
-	else
-		WGET="/usr/bin/wget"
-		$WGET -q --tries=20 --timeout=10 http://www.google.com -O /tmp/google.idx &> /dev/null
-		if [ ! -s /tmp/google.idx ]
-		then
-			echo "INTERNET NOT CONNECTED"
-			echo ''
-			exit
-		fi
-	fi
-fi
 
 CLUSTERNAME=$(jq '.K8sMN.Cluster.Info[0].Name' $NODES_JSON)
 CLUSTERNAME="${CLUSTERNAME//$DoubleQuotes/$NoQuotes}"
@@ -647,7 +607,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo ''	
 		
 		sleep 2
-		#clear
+		clear
 		
 		echo -e "${ORANGE}==============================================================================${NC}"
 		echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
