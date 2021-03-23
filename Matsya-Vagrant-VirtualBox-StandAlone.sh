@@ -21,6 +21,7 @@ echo -e "${GREEN}===============================================================
 echo ''
 echo -e "\x1b[3m\x1b[4mVAGRANT VIRTUALBOX STANDALONE\x1b[m"
 echo ''
+
 read -p "Enter Base Location (If Missing, Will Be Created) > " -e -i "/opt/Matsya" BASE
 sudo mkdir -p $BASE/VagVBoxSA
 sudo mkdir -p $BASE/Repo

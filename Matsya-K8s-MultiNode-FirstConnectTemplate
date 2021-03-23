@@ -8,7 +8,7 @@ THEOSNAME="OSNAMETOBEUSED"
 THEBASENAME="BASENAMETOBEUSED"
 THECLUSTERNAME="CLUSTERNAMETOBEUSED"
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -23,7 +23,7 @@ if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ]
 	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
 fi
 
-if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] ; then
+if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "FDR" ] ; then
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -102,11 +102,41 @@ exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /
 	sudo systemctl status sshd
 fi
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
+if [ $THEOSNAME == "FDR" ] || [ $THEOSNAME == "FDR" ] ; then
+	sudo setenforce 0
+	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+	sudo yum install -y jq openssh-server openssh-clients sshpass curl wget haproxy ca-certificates curl gnupg gnupg2 corosync pcs pacemaker haproxy haveged yum-utils
+	sudo rm -rf /etc/yum.repos.d/hashicorp.repo
+	release="fedora" && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
+	sudo yum install -y terraform
+	sudo dnf -y install dnf-plugins-core
+	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
+	sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+	sudo dnf install -y docker-ce docker-ce-cli containerd.io && sudo systemctl enable docker && sudo systemctl start docker && sudo docker run hello-world
+	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
+	echo "[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
+	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+	sudo systemctl enable --now kubelet
+	sudo sed -i "s/GSSAPIAuthentication/#GSSAPIAuthentication/g" /etc/ssh/sshd_config
+	sudo sed -i "s/GSSAPICleanupCredentials/#GSSAPICleanupCredentials/g" /etc/ssh/sshd_config
+	sudo sed -i "s/AuthorizedKeysFile/#AuthorizedKeysFile/g" /etc/ssh/sshd_config
+	echo "AuthorizedKeysFile %h/.ssh/authorized_keys" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+	sudo systemctl restart sshd
+	sudo systemctl status sshd
+fi
+
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
 	sudo apt-get install -y jq ssh sshpass curl wget heartbeat haproxy apt-transport-https ca-certificates curl gnupg gnupg2 software-properties-common lsb-release gnupg-agent corosync pcs pacemaker haproxy haveged
 fi
 
-if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] ; then
+if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] ; then
 	sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 	sudo rm -rf /etc/apt/sources.list.d/kubernetes.list
 	echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
@@ -115,7 +145,7 @@ if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "MNT" ] ; then
 	echo "deb [arch=amd64] https://apt.releases.hashicorp.com groovy main" | sudo tee /etc/apt/sources.list.d/archive_uri-https_apt_releases_hashicorp_com-groovy.list > /dev/null
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg	
 	sudo rm -rf /etc/apt/sources.list.d/docker.list
-	if [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "MNT" ] ; then
+	if [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "UBU0" ] ; then
 		echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 	fi
 	if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
@@ -141,5 +171,9 @@ if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then
 	sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl					
 fi
 
-#sudo swapoff -a
+if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then	
+	ABC="XYZ"
+else
+	sudo swapoff -a					
+fi
 
