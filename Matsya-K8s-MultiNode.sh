@@ -215,6 +215,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 				xx1234=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.Terminal[0].SamePassword?")
 				xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
 				if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+					echo ''				
 					echo '-----------------------'					
 					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'SamePassword' Missing In Secret File !!"
 					echo '-----------------------'
@@ -267,6 +268,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 							xx1234=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].IPAddress?')
 							xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
 							if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+								echo ''
 								echo '-----------------------'					
 								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
 								echo '-----------------------'
@@ -276,6 +278,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].Password?')
 							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
 							if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
+								echo ''
 								echo '-----------------------'					
 								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'Password' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
 								echo '-----------------------'
@@ -309,10 +312,27 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		ISSAMEPEM=$(jq '.K8sMN.Cluster.Terminal[0].IsSamePEM' $NODES_JSON)
 		ISSAMEPEM="${ISSAMEPEM//$DoubleQuotes/$NoQuotes}"
 		if [ $ISSAMEPEM == "YES" ] || [ $ISSAMEPEM == "YES" ] ; then
-			echo '-----------------------'
-			echo ''		
-			read -p "Enter .pem File Location For All Terminals > " -e -i "" GLOBALPEM
-			echo ''
+			if [ $SECRETSAVAILABLE == "YES" ] || [ $SECRETSAVAILABLE == "YES" ] ; then
+				xx1234=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.Terminal[0].SamePEM?")
+				xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
+				if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+					echo ''
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'SamePEM' Missing In Secret File !!"
+					echo '-----------------------'
+					echo ''
+					exit
+				else
+					GLOBALPEM="$xx1234"
+					echo ''							
+				fi								
+			fi
+			if [ "$GLOBALPEM" == "" ] || [ "$GLOBALPEM" == "" ] ; then		
+				echo '-----------------------'
+				echo ''		
+				read -p "Enter .pem File Location For All Terminals > " -e -i "" GLOBALPEM
+				echo ''
+			fi
 			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
@@ -327,8 +347,10 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			echo '-----------------------'
 			echo ''			
 		else
-			echo '-----------------------'
-			echo ''
+			if [ $SECRETSAVAILABLE == "NO" ] || [ $SECRETSAVAILABLE == "NO" ] ; then
+				echo '-----------------------'
+				echo ''
+			fi
 			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
@@ -339,8 +361,41 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					Terminal="${Terminal//$DoubleQuotes/$NoQuotes}"
 					TerminalIP=$(jq '.K8sMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
 					TerminalIP="${TerminalIP//$DoubleQuotes/$NoQuotes}"
-					TEMPPEM=""			
-					read -p "Enter .pem File Location For => $Terminal ($TerminalIP) > " -e -i "" TEMPPEM
+					TEMPPEM=""
+					if [ $SECRETSAVAILABLE == "YES" ] || [ $SECRETSAVAILABLE == "YES" ] ; then
+						TerminalsInnerCount=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.Terminals | length")
+						for((i=0;i<TerminalsInnerCount;i++))
+						do
+							xx1234=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].IPAddress?')
+							xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
+							if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+								echo ''
+								echo '-----------------------'					
+								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+								echo '-----------------------'
+								echo ''
+								exit
+							fi
+							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].PEM?')
+							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
+							if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
+								echo ''
+								echo '-----------------------'					
+								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'PEM' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+								echo '-----------------------'
+								echo ''
+								exit
+							fi
+							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+								TEMPPEM="$xx12534"
+								break
+							else
+								TEMPPEM="NA"
+							fi
+						done						
+					else					
+						read -p "Enter .pem File Location For => $Terminal ($TerminalIP) > " -e -i "" TEMPPEM
+					fi													
 					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PEM├'$TEMPPEM
 					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))	
 				fi
@@ -351,7 +406,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			echo ''		
 		fi				
 	fi	
-
+#4ab9t27528553ubQsK2dA /home/prathamos/Downloads/testaws.pem
 	if [ $AUTHMODE == "ANY" ] || [ $AUTHMODE == "ANY" ] ; then
 		echo '-----------------------'
 		echo ''
