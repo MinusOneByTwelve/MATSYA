@@ -167,16 +167,69 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")																			
 		fi
 	done
+	
+	sudo mkdir -p $BASE/tmp
+	sudo chmod -R 777 $BASE/tmp
+	SECRETSAVAILABLE=""
+	THEACTUALSECRETS=""
+	THESECRETSFILE=$(jq '.K8sMN.Cluster.Terminal[0].SecretsFileLocation' $NODES_JSON)
+	THESECRETSFILE="${THESECRETSFILE//$DoubleQuotes/$NoQuotes}"
+	if [ "$THESECRETSFILE" == "" ] || [ "$THESECRETSFILE" == "" ] ; then
+		SECRETSAVAILABLE="NO"
+	else
+		SECRETSAVAILABLE="YES"
+		if [ -f "$THESECRETSFILE" ]
+		then
+			ABC="XYZ"
+		else
+			echo '-----------------------'					
+			echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mSecret File Missing !!"
+			echo '-----------------------'
+			echo ''
+			exit
+		fi				
+		echo '-----------------------'
+		echo ''		
+		read -s -p "Enter Secret Key > " -e -i "" THESECRETKEY
+		echo ''	
+		ITER=${THESECRETKEY:7:6}
+		RANDOMSECFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+		sudo cp $THESECRETSFILE $BASE/tmp/$RANDOMSECFILENAME
+		sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$RANDOMSECFILENAME
+		sudo chmod u=r,g=,o= $BASE/tmp/$RANDOMSECFILENAME
+		REALSECRETSFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+		openssl enc -a -d -aes-256-cbc -pbkdf2 -iter $ITER -k $THESECRETKEY -in $BASE/tmp/$RANDOMSECFILENAME -out $BASE/tmp/$REALSECRETSFILENAME
+		sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$REALSECRETSFILENAME
+		sudo chmod u=r,g=,o= $BASE/tmp/$REALSECRETSFILENAME
+		THEACTUALSECRETS=$(<$BASE/tmp/$REALSECRETSFILENAME)		
+		sudo rm -rf $BASE/tmp/$REALSECRETSFILENAME				
+		sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME		
+	fi	
 				
 	GLOBALPASSWORD=""		
 	if [ $AUTHMODE == "PASSWORD" ] || [ $AUTHMODE == "PASSWORD" ] ; then
 		ISSAMEPASSWORD=$(jq '.K8sMN.Cluster.Terminal[0].IsSamePassword' $NODES_JSON)
 		ISSAMEPASSWORD="${ISSAMEPASSWORD//$DoubleQuotes/$NoQuotes}"
 		if [ $ISSAMEPASSWORD == "YES" ] || [ $ISSAMEPASSWORD == "YES" ] ; then
-			echo '-----------------------'
-			echo ''		
-			read -s -p "Enter Password For All Terminals > " -e -i "" GLOBALPASSWORD
-			echo ''
+			if [ $SECRETSAVAILABLE == "YES" ] || [ $SECRETSAVAILABLE == "YES" ] ; then
+				xx1234=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.Terminal[0].SamePassword?")
+				xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
+				if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'SamePassword' Missing In Secret File !!"
+					echo '-----------------------'
+					echo ''
+					exit
+				else
+					GLOBALPASSWORD="$xx1234"							
+				fi								
+			fi
+			if [ "$GLOBALPASSWORD" == "" ] || [ "$GLOBALPASSWORD" == "" ] ; then
+				echo '-----------------------'
+				echo ''		
+				read -s -p "Enter Password For All Terminals > " -e -i "" GLOBALPASSWORD
+				echo ''
+			fi
 			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
@@ -190,10 +243,12 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			THECOUNTKEEPER=0
 			echo ''
 			echo '-----------------------'
-			echo ''							
+			echo ''									
 		else
-			echo '-----------------------'
-			echo ''
+			if [ $SECRETSAVAILABLE == "NO" ] || [ $SECRETSAVAILABLE == "NO" ] ; then
+				echo '-----------------------'
+				echo ''
+			fi		
 			THECOUNTKEEPER=0
 			for((j=0;j<$TerminalsCount;j++))
 			do
@@ -205,8 +260,39 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					TerminalIP=$(jq '.K8sMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
 					TerminalIP="${TerminalIP//$DoubleQuotes/$NoQuotes}"				
 					TEMPPASSWORD=""
-					read -s -p "Enter Password For => $Terminal ($TerminalIP) > " -e -i "" TEMPPASSWORD
-					echo ''
+					if [ $SECRETSAVAILABLE == "YES" ] || [ $SECRETSAVAILABLE == "YES" ] ; then
+						TerminalsInnerCount=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.Terminals | length")
+						for((i=0;i<TerminalsInnerCount;i++))
+						do
+							xx1234=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].IPAddress?')
+							xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
+							if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+								echo '-----------------------'					
+								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+								echo '-----------------------'
+								echo ''
+								exit
+							fi
+							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].Password?')
+							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
+							if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
+								echo '-----------------------'					
+								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'Password' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+								echo '-----------------------'
+								echo ''
+								exit
+							fi
+							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+								TEMPPASSWORD="$xx12534"
+								break
+							else
+								TEMPPASSWORD="NA"
+							fi
+						done						
+					else					
+						read -s -p "Enter Password For => $Terminal ($TerminalIP) > " -e -i "" TEMPPASSWORD
+						echo ''
+					fi
 					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PASSWORD├'$TEMPPASSWORD
 					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))
 				fi		
@@ -366,7 +452,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	sudo rm -rf $BASE/K8sMN/$RANDOMFOLDERNAME
 
 	sleep 2
-	clear
+	#clear
 	
 	echo -e "${ORANGE}==============================================================================${NC}"
 	echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
