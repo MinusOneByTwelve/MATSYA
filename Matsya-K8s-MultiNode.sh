@@ -406,10 +406,12 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			echo ''		
 		fi				
 	fi	
-#4ab9t27528553ubQsK2dA /home/prathamos/Downloads/testaws.pem
+
 	if [ $AUTHMODE == "ANY" ] || [ $AUTHMODE == "ANY" ] ; then
-		echo '-----------------------'
-		echo ''
+		if [ $SECRETSAVAILABLE == "NO" ] || [ $SECRETSAVAILABLE == "NO" ] ; then
+			echo '-----------------------'
+			echo ''
+		fi
 		THECOUNTKEEPER=0
 		for((j=0;j<$TerminalsCount;j++))
 		do
@@ -420,32 +422,92 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 				Terminal="${Terminal//$DoubleQuotes/$NoQuotes}"
 				TerminalIP=$(jq '.K8sMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
 				TerminalIP="${TerminalIP//$DoubleQuotes/$NoQuotes}"
-				TEMPACCESS=""
+				TEMPACCESS="NA"
+				TEMPTYPEACCESS="NA"
 				CHECKIFAUTHMODEMISSING=$(jq '.K8sMN.Cluster.Terminals['${j}'].AuthMode?' $NODES_JSON)
 				CHECKIFAUTHMODEMISSING="${CHECKIFAUTHMODEMISSING//$DoubleQuotes/$NoQuotes}"
 				if [ $CHECKIFAUTHMODEMISSING == "null" ] || [ $CHECKIFAUTHMODEMISSING == "null" ] ; then
-					echo ''
 					echo '-----------------------'
 					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'AuthMode' Missing In '$NODES_JSON' For Terminal => $Terminal ($TerminalIP)"				
 					echo '-----------------------'
 					echo ''										
 					exit				
 				fi
-				if [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] || [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] ; then
-					TEMPACCESS=""
-					read -s -p "Enter Password For => $Terminal ($TerminalIP) > " -e -i "" TEMPACCESS
-					echo ''	
-					TEMPACCESS='PASSWORD├'$TEMPACCESS
+				if [ $SECRETSAVAILABLE == "YES" ] || [ $SECRETSAVAILABLE == "YES" ] ; then
+					TerminalsInnerCount=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.Terminals | length")
+					for((i=0;i<TerminalsInnerCount;i++))
+					do
+						xx1234=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].IPAddress?')
+						xx1234="${xx1234//$DoubleQuotes/$NoQuotes}"
+						if [ "$xx1234" == "null" ] || [ "$xx1234" = "" ] ; then
+							echo ''
+							echo '-----------------------'					
+							echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+							echo '-----------------------'
+							echo ''
+							exit
+						fi
+						if [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] || [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] ; then
+							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].PEM?')
+							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
+							if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
+								echo ''
+								echo '-----------------------'					
+								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'PEM' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+								echo '-----------------------'
+								echo ''
+								exit
+							fi
+							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+								TEMPACCESS="$xx12534"
+								TEMPTYPEACCESS="PEM"
+								break
+							else
+								TEMPACCESS="NA"
+								TEMPTYPEACCESS="PEM"								
+							fi
+						fi
+						if [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] || [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] ; then
+							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].Password?')
+							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
+							if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
+								echo ''
+								echo '-----------------------'					
+								echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'Password' Missing In Secret File For Terminal => $Terminal ($TerminalIP)"
+								echo '-----------------------'
+								echo ''
+								exit
+							fi
+							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+								TEMPACCESS="$xx12534"
+								TEMPTYPEACCESS="PASSWORD"
+								break
+							else
+								TEMPACCESS="NA"
+								TEMPTYPEACCESS="PASSWORD"								
+							fi
+						fi												
+					done
+					TEMPACCESS=$TEMPTYPEACCESS'├'$TEMPACCESS
 					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├'$TEMPACCESS
-					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))									
-				fi
-				if [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] || [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] ; then
-					TEMPACCESS=""
-					read -p "Enter .pem File Location For => $Terminal ($TerminalIP) > " -e -i "" TEMPACCESS	
-					TEMPACCESS='PEM├'$TEMPACCESS
-					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├'$TEMPACCESS
-					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))														
-				fi																				
+					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))											
+				else					
+					if [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] || [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] ; then
+						TEMPACCESS=""
+						read -s -p "Enter Password For => $Terminal ($TerminalIP) > " -e -i "" TEMPACCESS
+						echo ''	
+						TEMPACCESS='PASSWORD├'$TEMPACCESS
+						FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├'$TEMPACCESS
+						THECOUNTKEEPER=$((THECOUNTKEEPER + 1))									
+					fi
+					if [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] || [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] ; then
+						TEMPACCESS=""
+						read -p "Enter .pem File Location For => $Terminal ($TerminalIP) > " -e -i "" TEMPACCESS	
+						TEMPACCESS='PEM├'$TEMPACCESS
+						FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├'$TEMPACCESS
+						THECOUNTKEEPER=$((THECOUNTKEEPER + 1))														
+					fi
+				fi																								
 			fi
 		done
 		THECOUNTKEEPER=0
@@ -507,7 +569,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	sudo rm -rf $BASE/K8sMN/$RANDOMFOLDERNAME
 
 	sleep 2
-	#clear
+	clear
 	
 	echo -e "${ORANGE}==============================================================================${NC}"
 	echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
@@ -643,7 +705,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			RANDOM3FILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/K8sMN/$CLUSTERNAME/ListOfHosts $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME
 			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME					
-			if [ $THEREQUIREDAUTH == "PASSWORD" ] || [ $THEREQUIREDAUTH == "PASSWORD" ] ; then
+			if [ $THEREQUIREDAUTH == "PASSWORD" ] || [ $THEREQUIREDAUTH == "PASSWORD" ] ; then							
 				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
 				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOMFILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOMFILENAME && rm -rf $RANDOMFILENAME"								
 				sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
@@ -704,7 +766,15 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "chmod 777 $RANDOM2FILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S ./$RANDOM2FILENAME && rm -rf $RANDOM2FILENAME && echo \"$THEREQUIREDACCESS\" | sudo -S chmod 0700 $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/.ssh && echo \"$THEREQUIREDACCESS\" | sudo -S chmod 0644 $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/.ssh/authorized_keys"
 					sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME	
 				fi
-				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /root/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /home/$THEREQUIREDUSER/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/.bash_history"		
+				if [ $SECRETSAVAILABLE == "YES" ] || [ $SECRETSAVAILABLE == "YES" ] ; then
+					RANDOMSECFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+					sudo cp $THESECRETSFILE $BASE/tmp/$RANDOMSECFILENAME
+					sudo chmod 777 $BASE/tmp/$RANDOMSECFILENAME
+					sshpass -p "$THEREQUIREDACCESS" scp -P $THEREQUIREDPORT $BASE/tmp/$RANDOMSECFILENAME $THEREQUIREDUSER@$THEREQUIREDIP:/home/$THEREQUIREDUSER
+					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S mv $RANDOMSECFILENAME $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/.Secret && echo \"$THEREQUIREDACCESS\" | sudo -S chmod u=,g=,o= $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/.Secret"					
+					sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME
+				fi				
+				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /root/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /home/$THEREQUIREDUSER/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/.bash_history"						
 				echo ''
 			fi
 			if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
