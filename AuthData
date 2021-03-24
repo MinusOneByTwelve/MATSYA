@@ -1,0 +1,24 @@
+{
+  "K8sMN": {
+    "Cluster": {
+      "Terminals": [
+        {
+          "IPAddress": "192.168.1.18",
+          "Password": "adyah",
+          "PEM": "/home/prathamos/Downloads/testaws.pem"
+        },
+        {
+          "IPAddress": "192.168.1.14",
+          "Password": "Cent8@123",
+          "PEM": "/home/prathamos/Downloads/testaws3.pem"
+        }
+      ],
+      "Terminal": [
+        {
+          "SamePassword": "adyah",
+          "SamePEM": "/home/prathamos/Downloads/testaws2.pem"
+        }
+      ]
+    }
+  }
+}

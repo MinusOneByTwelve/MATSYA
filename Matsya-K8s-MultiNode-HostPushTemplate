@@ -19,6 +19,7 @@ BASE="BASENAMETOBEUSED"
 CLUSTERNAME="CLUSTERNAMETOBEUSED"
 THEOSNAME="OSNAMETOBEUSED"
 THEREQUIREDUSER="THENAMEOFTHEUSER"
+THEHOMEREQUIREDFORUSER="$BASE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER"
 ELIGIBLEUSERS="USERSELIGIBLE"
 CURRENTUSER=$(whoami)
 
@@ -75,17 +76,28 @@ if [ "$COUNTERe" -lt "2" ]; then
 	echo ''
 	exit
 fi
+
 echo -e "${PURPLE}-------------------------${NC}"
 echo ''
-read -p "Enter Terminal Number To Connect > " -e -i "0" NodeNumber
+read -p "Enter File Path > " -e -i "" THEREQUIREDFILE
+THEREQUIREDACTUALNAMEFORFILE=$(basename $THEREQUIREDFILE)
+echo ''
+if [ -f "$THEREQUIREDFILE" ]
+then
+	ABC="XYZ"
+else
+	exit
+fi
+read -p "Enter Terminal Number(s) To Push (0 For All) > " -e -i "-1" NodeNumber
+echo ''
 IFS=',' read -r -a CHOICELIST <<< $NodeNumber
 for _CHOICE in "${CHOICELIST[@]}"
 do
 	if ! [[ "$_CHOICE" =~ ^[0-9]+$ ]] ; 
 	 then exec >&2; echo ""; echo -e "${RED}Number Required!!${NC}"; echo ""; exit;
 	fi
-	if [ $_CHOICE == "0" ] ; then
-		echo ""; echo -e "${RED}Number Required!!${NC}"; echo ""; exit;	
+	if [ "$_CHOICE" -lt "0" ] ; then
+		echo ""; echo -e "${RED}Valid Number Required!!${NC}"; echo ""; exit;
 	fi		
 done
 for _CHOICE in "${CHOICELIST[@]}"
@@ -99,28 +111,56 @@ do
 		fi	
 	done				
 done
-if [ "$SLNO" -lt "1" ]; then
+if [ "$SLNO" -lt "0" ]; then
     echo ""; echo -e "${RED}Valid Number Required!!${NC}"; echo ""; exit;
 fi
-clear
-clear
-for _CHOICE in "${CHOICELIST[@]}"
-do
+THEFIRSTCHOICE="${CHOICELIST[0]}"
+if [ $THEFIRSTCHOICE == "0" ] || [ $THEFIRSTCHOICE == "0" ] ; then
 	for _ACTUALNORMAL in "${ACTUALNORMAL[@]}"
 	do
 		IFS='~' read -r -a _ACTUALNORMALSPLIT <<< $_ACTUALNORMAL
-		if [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] || [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] ; then	
-			THEHOSTTOCONNECT="${_ACTUALNORMALSPLIT[1]}"
-			IFS='├' read -r -a TerminalVals <<< $THEHOSTTOCONNECT
-			CONNECTTERMINAL="${TerminalVals[1]}"
-			CONNECTTERMINALHOSTNAME="${TerminalVals[0]}"
-			THEREQUIREDPORT="${TerminalVals[3]}"
-			echo -e "${RED}==============================================================================${NC}"
-			echo -e "${RED}${BOLD}$CONNECTTERMINALHOSTNAME / $CONNECTTERMINAL${NORM}${NC}"
-			echo -e "${RED}==============================================================================${NC}"
-			echo ''			
-			ssh $THEREQUIREDUSER@$CONNECTTERMINAL -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem"						
-		fi	
-	done				
-done
+		THEHOSTTOCONNECT="${_ACTUALNORMALSPLIT[1]}"
+		IFS='├' read -r -a TerminalVals <<< $THEHOSTTOCONNECT
+		CONNECTTERMINAL="${TerminalVals[1]}"
+		CONNECTTERMINALHOSTNAME="${TerminalVals[0]}"
+		THEREQUIREDPORT="${TerminalVals[3]}"
+		echo "----------------"
+		echo "$CONNECTTERMINALHOSTNAME / $CONNECTTERMINAL"
+		echo "----------------"
+		echo 'Copy Started...'
+		echo '~~~~~~~~~~~~~~~~'
+		scp -P $THEREQUIREDPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" "$THEREQUIREDFILE" $THEREQUIREDUSER@$CONNECTTERMINAL:$THEHOMEREQUIREDFORUSER
+		ssh -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $THEREQUIREDUSER@$CONNECTTERMINAL "chmod u=rwx,g=,o= $THEREQUIREDACTUALNAMEFORFILE"
+		echo '~~~~~~~~~~~~~~~~'
+		echo 'Copy Complete...'
+		echo '~~~~~~~~~~~~~~~~'		
+		echo ''	
+	done
+else
+	for _CHOICE in "${CHOICELIST[@]}"
+	do
+		for _ACTUALNORMAL in "${ACTUALNORMAL[@]}"
+		do
+			IFS='~' read -r -a _ACTUALNORMALSPLIT <<< $_ACTUALNORMAL
+			if [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] || [ "$_CHOICE" == "${_ACTUALNORMALSPLIT[0]}" ] ; then	
+				THEHOSTTOCONNECT="${_ACTUALNORMALSPLIT[1]}"
+				IFS='├' read -r -a TerminalVals <<< $THEHOSTTOCONNECT
+				CONNECTTERMINAL="${TerminalVals[1]}"
+				CONNECTTERMINALHOSTNAME="${TerminalVals[0]}"
+				THEREQUIREDPORT="${TerminalVals[3]}"
+				echo "----------------"
+				echo "$CONNECTTERMINALHOSTNAME / $CONNECTTERMINAL"
+				echo "----------------"
+				echo 'Copy Started...'
+				echo '~~~~~~~~~~~~~~~~'
+				scp -P $THEREQUIREDPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" "$THEREQUIREDFILE" $THEREQUIREDUSER@$CONNECTTERMINAL:$THEHOMEREQUIREDFORUSER
+				ssh -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $THEREQUIREDUSER@$CONNECTTERMINAL "chmod u=rwx,g=,o= $THEREQUIREDACTUALNAMEFORFILE"
+				echo '~~~~~~~~~~~~~~~~'
+				echo 'Copy Complete...'
+				echo '~~~~~~~~~~~~~~~~'		
+				echo ''												
+			fi	
+		done				
+	done
+fi
 
