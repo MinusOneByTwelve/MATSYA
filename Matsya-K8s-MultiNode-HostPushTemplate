@@ -44,7 +44,7 @@ echo -e "${ORANGE}==============================================================
 echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
 echo -e "${GREEN}==============================================================================${NC}"
 echo ''
-echo -e "\x1b[3m\x1b[4mK8s MULTINODE\x1b[m"
+echo -e "\x1b[3m\x1b[4mK8s MULTINODE (FILE PUSH)\x1b[m"
 echo ''
 echo -e "${PURPLE}-------------------------${NC}"
 echo -e "${GREEN}${BOLD}TERMINALS AVAILABLE [$CLUSTERNAME]${NORM}${NC}"

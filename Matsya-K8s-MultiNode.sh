@@ -693,8 +693,16 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			
 			RND1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostAddTemplate $BASE/K8sMN/$CLUSTERNAME/$RND1
+			
 			RND2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostExecTemplate $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo sed -i s#THENAMEOFTHEUSER#$RANDOMUSERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo sed -i s#OSNAMETOBEUSED#$THEREQUIREDOS#g $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo sed -i s#BASENAMETOBEUSED#$THEREQUIREDBASE#g $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo sed -i s#CLUSTERNAMETOBEUSED#$CLUSTERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RND2
+			sudo sed -i s#USERSELIGIBLE#"$CURRENTUSER├$RANDOMUSERNAME"#g $BASE/K8sMN/$CLUSTERNAME/$RND2			
+			
 			RND3=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostKillTemplate $BASE/K8sMN/$CLUSTERNAME/$RND3
 			
@@ -930,12 +938,12 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo '-----------------------'
 		echo "* PASSWORD LOGIN     => sshpass -p \"$RANDOMPASSWORD\" ssh -p PORT -o \"StrictHostKeyChecking=no\" $RANDOMUSERNAME@TERMINAL"
 		echo '-----'		
-		echo "* SSH KEY LOGIN      => $BASE/matsya-k8s-mn-$CLUSTERNAME-connect.sh"
-		echo '-----'		        
 		echo "* FILE PUSH          => $BASE/matsya-k8s-mn-$CLUSTERNAME-push.sh"
 		echo '-----'		
 		echo "* EXECUTE            => $BASE/matsya-k8s-mn-$CLUSTERNAME-exec.sh"
-		echo '-----'		
+		echo '-----'
+		echo "* CONNECT TERMINAL   => $BASE/matsya-k8s-mn-$CLUSTERNAME-connect.sh"
+		echo '-----'		        				
 		echo "* ADD TERMINAL       => $BASE/matsya-k8s-mn-$CLUSTERNAME-add.sh"
 		echo '-----'	
 		echo "* REMOVE TERMINAL    => $BASE/matsya-k8s-mn-$CLUSTERNAME-remove.sh"
