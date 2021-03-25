@@ -4,19 +4,21 @@
       "Terminals": [
         {
           "IPAddress": "192.168.1.18",
-          "Password": "adyah",
-          "PEM": "/home/prathamos/Downloads/testaws.pem"
+          "Password": "adyah"
+        },      
+        {
+          "IPAddress": "192.168.1.51",
+          "PEM": "/opt/Matsya/matsya-vagvbox-sa-331c7e.pem"
         },
         {
-          "IPAddress": "192.168.1.14",
-          "Password": "Cent8@123",
-          "PEM": "/home/prathamos/Downloads/testaws3.pem"
-        }
+          "IPAddress": "192.168.1.50",
+          "Password": "hgBTjJGJCZ8Ag3z"
+        }        
       ],
       "Terminal": [
         {
-          "SamePassword": "adyah",
-          "SamePEM": "/home/prathamos/Downloads/testaws2.pem"
+          "SamePassword": "",
+          "SamePEM": ""
         }
       ]
     }

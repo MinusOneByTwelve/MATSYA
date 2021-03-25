@@ -44,7 +44,7 @@ then
 	openssl enc -a -aes-256-cbc -pbkdf2 -iter $R -in /opt/Matsya/Repo/$RANDOMFILENAME -out /opt/Matsya/Repo/".$RANDOMFILENAME" -k $RANDOMKEY
 	sudo chown $CURRENTUSER:$CURRENTUSER /opt/Matsya/Repo/".$RANDOMFILENAME"
 	sudo chmod u=r,g=,o= /opt/Matsya/Repo/".$RANDOMFILENAME"
-	sudo rm -rf $RANDOMFILENAME
+	sudo rm -rf /opt/Matsya/Repo/$RANDOMFILENAME
 	echo -e "${PURPLE}-----------------------${NC}"
 	echo -e "${PURPLE}${BOLD}PROCESS INFO${NORM}${NC}"
 	echo -e "${PURPLE}-----------------------${NC}"

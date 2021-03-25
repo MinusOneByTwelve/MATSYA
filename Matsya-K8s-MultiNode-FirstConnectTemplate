@@ -8,7 +8,7 @@ THEOSNAME="OSNAMETOBEUSED"
 THEBASENAME="BASENAMETOBEUSED"
 THECLUSTERNAME="CLUSTERNAMETOBEUSED"
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] ; then
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -18,9 +18,9 @@ if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" 
 	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user > /dev/null
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
 	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chmod -R u=rwx,g=rwx,o=rwx $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
 	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
+	sudo chmod -R u=rwx,g=rwx,o=rwx $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
 fi
 
 if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "FDR" ] ; then
@@ -33,9 +33,9 @@ if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" 
 	echo "$RANDOMUSERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$RANDOMUSERNAME-user > /dev/null
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
 	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
+	sudo chmod -R u=rwx,g=rwx,o=rwx $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME/.ssh
 	sudo chown -R $RANDOMUSERNAME:$RANDOMUSERNAME $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
-	sudo chmod -R u=rwx,g=,o= $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
+	sudo chmod -R u=rwx,g=rwx,o=rwx $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME
 fi
 
 if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "E2E7" ] ; then
@@ -132,7 +132,7 @@ exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /
 	sudo systemctl status sshd
 fi
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] ; then
 	sudo apt-get install -y jq ssh sshpass curl wget heartbeat haproxy apt-transport-https ca-certificates curl gnupg gnupg2 software-properties-common lsb-release gnupg-agent corosync pcs pacemaker haproxy haveged
 fi
 
@@ -167,11 +167,11 @@ if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "DEB" ] ; then
 	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl	
 fi
 
-if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then	
+if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] ; then	
 	sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl					
 fi
 
-if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POS" ] ; then	
+if [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "POSB" ] ; then	
 	ABC="XYZ"
 else
 	sudo swapoff -a					
