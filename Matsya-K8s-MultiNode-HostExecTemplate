@@ -19,9 +19,9 @@ BASE="BASENAMETOBEUSED"
 CLUSTERNAME="CLUSTERNAMETOBEUSED"
 THEOSNAME="OSNAMETOBEUSED"
 THEREQUIREDUSER="THENAMEOFTHEUSER"
-THEHOMEREQUIREDFORUSER="$BASE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER"
 ELIGIBLEUSERS="USERSELIGIBLE"
 CURRENTUSER=$(whoami)
+THEHOMEREQUIREDFORUSER="$BASE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER"
 
 IFS='├' read -r -a ALLOWEDUSERS <<< $ELIGIBLEUSERS
 EITHERTHIS="${ALLOWEDUSERS[0]}"
@@ -40,16 +40,8 @@ CHOICENAME=""
 SLNO=0
 INCREMENT=1
 
-echo -e "${ORANGE}==============================================================================${NC}"
-echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
-echo -e "${GREEN}==============================================================================${NC}"
-echo ''
-echo -e "\x1b[3m\x1b[4mK8s MULTINODE (EXECUTE)\x1b[m"
-echo ''
-echo -e "${PURPLE}-------------------------${NC}"
-echo -e "${GREEN}${BOLD}TERMINALS AVAILABLE [$CLUSTERNAME]${NORM}${NC}"
-echo -e "${PURPLE}-------------------------${NC}"
-
+FINAL_BEFORE_CONNECT_TERMINAL_LIST=()
+FINAL_TERMINAL_LIST=()
 COUNTERe=1
 while read Terminal; do
 	IFS='├' read -r -a TerminalVals <<< $Terminal
@@ -58,18 +50,78 @@ while read Terminal; do
 	THEREQUIREDLAN="${TerminalVals[2]}"
 	if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "GCP" ] || [ $THEOSNAME == "AZR" ] || [ $THEOSNAME == "CLD" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "E2E8" ] ; then
 		if [ $THEREQUIREDLAN == "PUBLIC" ] || [ $THEOSNAME == "PUBLIC" ] ; then			
-			echo "($COUNTERe) $THEREQUIREDHOSTNAME / $THEREQUIREDIP"
-			COUNTERe=$((COUNTERe + 1))
-			ACTUALNORMAL=("${ACTUALNORMAL[@]}" "$COUNTER~$Terminal")
-			COUNTER=$((COUNTER + 1))
+			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal")
 		fi
 	else
-		echo "($COUNTERe) $THEREQUIREDHOSTNAME / $THEREQUIREDIP"
-		COUNTERe=$((COUNTERe + 1))
-		ACTUALNORMAL=("${ACTUALNORMAL[@]}" "$COUNTER~$Terminal")
-		COUNTER=$((COUNTER + 1))	
+		FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal")	
 	fi
 done < $BASE/K8sMN/$CLUSTERNAME/HOSTS
+
+sudo rm -rf /home/$CURRENTUSER/.ssh/known_hosts
+echo '-----------------------'
+RANDOMFOLDERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+sudo mkdir -p $BASE/K8sMN/$RANDOMFOLDERNAME
+sudo chmod -R 777 $BASE/K8sMN/$RANDOMFOLDERNAME
+pushd $BASE/K8sMN/$RANDOMFOLDERNAME
+touch $RANDOMFOLDERNAME
+for Terminal in "${FINAL_BEFORE_CONNECT_TERMINAL_LIST[@]}"
+do
+	IFS='├' read -r -a TerminalVals <<< $Terminal
+	THEREQUIREDPORT="${TerminalVals[3]}"
+	THEREQUIREDIP="${TerminalVals[1]}"
+	THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+	if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+		THEREQUIREDIP=$THEREQUIREDHOSTNAME
+	fi		
+	(
+	set -Ee
+	function _catch {
+		echo "ERROR"
+		exit 0
+	}
+	function _finally {
+		abc=xyz
+	}
+	trap _catch ERR
+	trap _finally EXIT
+	THERESPONSE=$(ssh $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o ConnectTimeout=15 -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" "echo \"$RANDOMFOLDERNAME\"")
+	echo "$Terminal├$THERESPONSE" >> $RANDOMFOLDERNAME		
+	)		
+done	
+popd
+echo '-----------------------'	
+echo ''
+
+COUNTERf=1
+ERROR_TERMINAL_LIST=()
+while read LINE; do
+	IFS='├' read -r -a TerminalFullVals <<< $LINE
+	ACCESSTRYRESULT="${TerminalFullVals[4]}"
+	if [ "$ACCESSTRYRESULT" == "$RANDOMFOLDERNAME" ] || [ "$ACCESSTRYRESULT" == "$RANDOMFOLDERNAME" ] ; then
+		ACTUALNORMAL=("${ACTUALNORMAL[@]}" "$COUNTER~$LINE")
+		COUNTER=$((COUNTER + 1))
+		COUNTERe=$((COUNTERe + 1))
+		FINAL_TERMINAL_LIST+=("$LINE")
+	else
+		COUNTERf=$((COUNTERf + 1))
+		ERROR_TERMINAL_LIST+=("$LINE")	
+	fi
+done < $BASE/K8sMN/$RANDOMFOLDERNAME/$RANDOMFOLDERNAME	
+sudo rm -rf $BASE/K8sMN/$RANDOMFOLDERNAME
+
+sleep 2
+clear
+
+echo -e "${ORANGE}==============================================================================${NC}"
+echo -e "${BLUE}${BOLD}\x1b[4mM${NORM}${NC}ultifaceted deploy${BLUE}${BOLD}\x1b[4mA${NORM}${NC}gnostic ${BLUE}${BOLD}\x1b[4mT${NORM}${NC}imesaving ${BLUE}${BOLD}\x1b[4mS${NORM}${NC}calable anal${BLUE}${BOLD}\x1b[4mY${NORM}${NC}tics ${BLUE}${BOLD}\x1b[4mA${NORM}${NC}malgamated ${BOLD}\x1b[30;44mPLATFORM\x1b[m${NORM}"
+echo -e "${GREEN}==============================================================================${NC}"
+echo ''
+echo -e "\x1b[3m\x1b[4mK8s MULTINODE (EXECUTE) [$CLUSTERNAME]\x1b[m"
+echo ''
+echo -e "${PURPLE}-------------------------${NC}"
+echo -e "${GREEN}${BOLD}TERMINALS AVAILABLE${NORM}${NC}"
+echo -e "${PURPLE}-------------------------${NC}"
+
 if [ "$COUNTERe" -lt "2" ]; then
 	echo -e "${RED}${BOLD}xxxxx${NORM}${NC}"
 	echo -e "${PURPLE}-------------------------${NC}"
@@ -77,8 +129,45 @@ if [ "$COUNTERe" -lt "2" ]; then
 	exit
 fi
 
+COUNTERe=1
+for Terminal in "${FINAL_TERMINAL_LIST[@]}"
+do
+	IFS='├' read -r -a TerminalVals <<< $Terminal
+	THEREQUIREDIP="${TerminalVals[1]}"
+	THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+	if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+		THEREQUIREDIP=""
+	else
+		THEREQUIREDIP=" ($THEREQUIREDIP)"
+	fi				
+	echo "($COUNTERe) $THEREQUIREDHOSTNAME$THEREQUIREDIP"
+	COUNTERe=$((COUNTERe + 1)) 
+done
 echo -e "${PURPLE}-------------------------${NC}"
 echo ''
+
+if [ "$COUNTERf" -lt "2" ]; then
+	ABC="XYZ"
+else
+	echo -e "${PURPLE}-------------------------${NC}"
+	echo -e "${RED}${BOLD}TERMINALS DOWN${NORM}${NC}"
+	echo -e "${PURPLE}-------------------------${NC}"
+	for Terminal in "${ERROR_TERMINAL_LIST[@]}"
+	do
+		IFS='├' read -r -a TerminalVals <<< $Terminal
+		THEREQUIREDIP="${TerminalVals[1]}"
+		THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+		if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+			THEREQUIREDIP=""
+		else
+			THEREQUIREDIP=" ($THEREQUIREDIP)"
+		fi				
+		echo -e "${RED}\x1b[3m* $THEREQUIREDHOSTNAME$THEREQUIREDIP${NC}"
+	done	
+	echo -e "${PURPLE}-------------------------${NC}"
+	echo ''	
+fi
+
 read -p "Enter Script Path > " -e -i "" THEREQUIREDFILE
 THEREQUIREDACTUALNAMEFORFILE=$(basename $THEREQUIREDFILE)
 echo ''
@@ -124,8 +213,15 @@ if [ $THEFIRSTCHOICE == "0" ] || [ $THEFIRSTCHOICE == "0" ] ; then
 		CONNECTTERMINAL="${TerminalVals[1]}"
 		CONNECTTERMINALHOSTNAME="${TerminalVals[0]}"
 		THEREQUIREDPORT="${TerminalVals[3]}"
+		THENAMETOBESHOWN=""
+		if [ "$CONNECTTERMINAL" == "null" ] || [ "$CONNECTTERMINAL" = "" ] ; then
+			CONNECTTERMINAL=$CONNECTTERMINALHOSTNAME
+			THENAMETOBESHOWN=""
+		else
+			THENAMETOBESHOWN=" ($CONNECTTERMINAL)"
+		fi		
 		echo "---------------------"
-		echo "$CONNECTTERMINALHOSTNAME / $CONNECTTERMINAL"
+		echo "$CONNECTTERMINALHOSTNAME$THENAMETOBESHOWN"
 		echo "---------------------"
 		echo 'Execution Started...'
 		echo '~~~~~~~~~~~~~~~~~~~~~'
@@ -148,8 +244,15 @@ else
 				CONNECTTERMINAL="${TerminalVals[1]}"
 				CONNECTTERMINALHOSTNAME="${TerminalVals[0]}"
 				THEREQUIREDPORT="${TerminalVals[3]}"
+				THENAMETOBESHOWN=""
+				if [ "$CONNECTTERMINAL" == "null" ] || [ "$CONNECTTERMINAL" = "" ] ; then
+					CONNECTTERMINAL=$CONNECTTERMINALHOSTNAME
+					THENAMETOBESHOWN=""
+				else
+					THENAMETOBESHOWN=" ($CONNECTTERMINAL)"
+				fi		
 				echo "---------------------"
-				echo "$CONNECTTERMINALHOSTNAME / $CONNECTTERMINAL"
+				echo "$CONNECTTERMINALHOSTNAME$THENAMETOBESHOWN"
 				echo "---------------------"
 				echo 'Execution Started...'
 				echo '~~~~~~~~~~~~~~~~~~~~~'
