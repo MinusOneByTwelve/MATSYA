@@ -65,6 +65,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	AUTHMODE="${AUTHMODE//$DoubleQuotes/$NoQuotes}"
 	
 	TerminalsCount=$(jq '.K8sMN.Cluster.Terminals | length' $NODES_JSON)
+	TerminalsCount=$((TerminalsCount - 1))
 
 	GLOBALUSERNAME=$(jq '.K8sMN.Cluster.Terminal[0].UserName' $NODES_JSON)
 	GLOBALUSERNAME="${GLOBALUSERNAME//$DoubleQuotes/$NoQuotes}"
@@ -91,7 +92,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		TerminalTheRqLocation=""	
 		CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 		CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
-		if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then			
+		if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then			
 			CHECKIFUSERNAMEMISSING=$(jq '.K8sMN.Cluster.Terminals['${j}'].UserName?' $NODES_JSON)
 			CHECKIFUSERNAMEMISSING="${CHECKIFUSERNAMEMISSING//$DoubleQuotes/$NoQuotes}"
 			if [ "$CHECKIFUSERNAMEMISSING" == "null" ] || [ "$CHECKIFUSERNAMEMISSING" = "" ] ; then
@@ -236,7 +237,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			do
 				CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 				CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
-				if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then
+				if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then
 					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PASSWORD├'$GLOBALPASSWORD
 					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))
 				fi		
@@ -255,7 +256,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			do
 				CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 				CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
-				if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then
+				if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then
 					Terminal=$(jq '.K8sMN.Cluster.Terminals['${j}'].HostName' $NODES_JSON)
 					Terminal="${Terminal//$DoubleQuotes/$NoQuotes}"
 					TerminalIP=$(jq '.K8sMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
@@ -285,7 +286,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 								echo ''
 								exit
 							fi
-							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+							if [ "$xx1234" == "$Terminal" ] || [ "$xx1234" = "$Terminal" ] ; then
 								TEMPPASSWORD="$xx12534"
 								break
 							else
@@ -338,7 +339,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			do
 				CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 				CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
-				if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then
+				if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then
 					FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]=${FINAL_BEFORE_CONNECT_TERMINAL_LIST[${THECOUNTKEEPER}]}'├PEM├'$GLOBALPEM
 					THECOUNTKEEPER=$((THECOUNTKEEPER + 1))
 				fi		
@@ -356,7 +357,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			do
 				CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 				CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
-				if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then			
+				if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then			
 					Terminal=$(jq '.K8sMN.Cluster.Terminals['${j}'].HostName' $NODES_JSON)
 					Terminal="${Terminal//$DoubleQuotes/$NoQuotes}"
 					TerminalIP=$(jq '.K8sMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
@@ -386,7 +387,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 								echo ''
 								exit
 							fi
-							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+							if [ "$xx1234" == "$Terminal" ] || [ "$xx1234" = "$Terminal" ] ; then
 								TEMPPEM="$xx12534"
 								break
 							else
@@ -417,7 +418,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		do
 			CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 			CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
-			if [ $CHECKIFTOOMIT == "null" ] || [ $CHECKIFTOOMIT == "null" ] ; then			
+			if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then			
 				Terminal=$(jq '.K8sMN.Cluster.Terminals['${j}'].HostName' $NODES_JSON)
 				Terminal="${Terminal//$DoubleQuotes/$NoQuotes}"
 				TerminalIP=$(jq '.K8sMN.Cluster.Terminals['${j}'].IPAddress' $NODES_JSON)
@@ -450,7 +451,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 						if [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] || [ "$CHECKIFAUTHMODEMISSING" == "PEM" ] ; then
 							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].PEM?')
 							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
-							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+							if [ "$xx1234" == "$Terminal" ] || [ "$xx1234" = "$Terminal" ] ; then
 								if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
 									echo ''
 									echo '-----------------------'					
@@ -460,7 +461,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 									exit
 								fi
 							fi
-							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+							if [ "$xx1234" == "$Terminal" ] || [ "$xx1234" = "$Terminal" ] ; then
 								TEMPACCESS="$xx12534"
 								TEMPTYPEACCESS="PEM"
 								break
@@ -472,7 +473,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 						if [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] || [ "$CHECKIFAUTHMODEMISSING" == "PASSWORD" ] ; then
 							xx12534=$(echo $THEACTUALSECRETS | jq -c '.K8sMN.Cluster.Terminals['${i}'].Password?')
 							xx12534="${xx12534//$DoubleQuotes/$NoQuotes}"
-							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+							if [ "$xx1234" == "$Terminal" ] || [ "$xx1234" = "$Terminal" ] ; then
 								if [ "$xx12534" == "null" ] || [ "$xx12534" = "" ] ; then
 									echo ''
 									echo '-----------------------'					
@@ -482,7 +483,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 									exit
 								fi
 							fi
-							if [ "$xx1234" == "$TerminalIP" ] || [ "$xx1234" = "$TerminalIP" ] ; then
+							if [ "$xx1234" == "$Terminal" ] || [ "$xx1234" = "$Terminal" ] ; then
 								TEMPACCESS="$xx12534"
 								TEMPTYPEACCESS="PASSWORD"
 								break
@@ -520,6 +521,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo ''	
 	fi
 	
+	sudo rm -rf /home/$CURRENTUSER/.ssh/known_hosts
 	echo '-----------------------'
 	RANDOMFOLDERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 	sudo mkdir -p $BASE/K8sMN/$RANDOMFOLDERNAME
@@ -535,6 +537,9 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		THEREQUIREDPORT="${TerminalVals[3]}"
 		THEREQUIREDIP="${TerminalVals[1]}"
 		THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+		if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+			THEREQUIREDIP=$THEREQUIREDHOSTNAME
+		fi		
 		(
 		set -Ee
 		function _catch {
@@ -590,8 +595,13 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	do
 		IFS='├' read -r -a TerminalVals <<< $Terminal
 		THEREQUIREDIP="${TerminalVals[1]}"
-		THEREQUIREDHOSTNAME="${TerminalVals[0]}"		
-		echo "($COUNTERe) $THEREQUIREDHOSTNAME / $THEREQUIREDIP"
+		THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+		if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+			THEREQUIREDIP=""
+		else
+			THEREQUIREDIP=" ($THEREQUIREDIP)"
+		fi				
+		echo "($COUNTERe) $THEREQUIREDHOSTNAME$THEREQUIREDIP"
 		COUNTERe=$((COUNTERe + 1)) 
 	done
 	echo '-----------------------'	
@@ -616,8 +626,12 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			THEREQUIREDLANTYPE="${TerminalVals[6]}"
 			THEREQUIREDCONNECTPORT="${TerminalVals[3]}"
 			echo "$THEREQUIREDHOSTNAME├$THEREQUIREDIP├$THEREQUIREDLANTYPE├$THEREQUIREDCONNECTPORT" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/HOSTS > /dev/null
-			echo "sudo sed -i -e s~\"$THEREQUIREDIP\"~\"#$THEREQUIREDIP\"~g /etc/hosts > /dev/null" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/ListOfHosts > /dev/null
-			echo "echo '$THEREQUIREDIP	$THEREQUIREDHOSTNAME' | sudo tee -a /etc/hosts > /dev/null" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/ListOfHosts > /dev/null					 
+			if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+				ABC="XYZ"
+			else
+				echo "sudo sed -i -e s~\"$THEREQUIREDIP\"~\"#$THEREQUIREDIP\"~g /etc/hosts > /dev/null" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/ListOfHosts > /dev/null
+				echo "echo '$THEREQUIREDIP	$THEREQUIREDHOSTNAME' | sudo tee -a /etc/hosts > /dev/null" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/ListOfHosts > /dev/null
+			fi											 
 		done	
 		sudo chown root:root $BASE/K8sMN/$CLUSTERNAME/HOSTS
 		sudo chmod u=r,g=,o= $BASE/K8sMN/$CLUSTERNAME/HOSTS		
@@ -668,10 +682,17 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			THEREQUIREDIP="${TerminalVals[1]}"
 			THEREQUIREDHOSTNAME="${TerminalVals[0]}"
 			THEREQUIREDOS="${TerminalVals[4]}"
-			THEREQUIREDBASE="${TerminalVals[5]}"		
+			THEREQUIREDBASE="${TerminalVals[5]}"	
+			THENAMETOBESHOWN=""
+			if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+				THEREQUIREDIP=$THEREQUIREDHOSTNAME
+				THENAMETOBESHOWN=""
+			else
+				THENAMETOBESHOWN=" ($THEREQUIREDIP)"
+			fi			
 			echo ''
 			echo '~~~~~~~~~~~~~~~~~~~~~~~'
-			echo "$THEREQUIREDHOSTNAME ($THEREQUIREDIP)"
+			echo "$THEREQUIREDHOSTNAME$THENAMETOBESHOWN"
 			echo '~~~~~~~~~~~~~~~~~~~~~~~'
 			RANDOMFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-FirstConnectTemplate $BASE/K8sMN/$CLUSTERNAME/$RANDOMFILENAME
@@ -717,8 +738,14 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			
 			RND6=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostRemoveTemplate $BASE/K8sMN/$CLUSTERNAME/$RND6
+			
 			RND7=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/Repo/Matsya-K8s-MultiNode-HostSyncTemplate $BASE/K8sMN/$CLUSTERNAME/$RND7
+			sudo sed -i s#THENAMEOFTHEUSER#$RANDOMUSERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RND7
+			sudo sed -i s#OSNAMETOBEUSED#$THEREQUIREDOS#g $BASE/K8sMN/$CLUSTERNAME/$RND7
+			sudo sed -i s#BASENAMETOBEUSED#$THEREQUIREDBASE#g $BASE/K8sMN/$CLUSTERNAME/$RND7
+			sudo sed -i s#CLUSTERNAMETOBEUSED#$CLUSTERNAME#g $BASE/K8sMN/$CLUSTERNAME/$RND7
+			sudo sed -i s#USERSELIGIBLE#"$CURRENTUSER├$RANDOMUSERNAME"#g $BASE/K8sMN/$CLUSTERNAME/$RND7			
 																						
 			RANDOM3FILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
 			sudo cp $BASE/K8sMN/$CLUSTERNAME/ListOfHosts $BASE/K8sMN/$CLUSTERNAME/$RANDOM3FILENAME
@@ -921,10 +948,15 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		do
 			IFS='├' read -r -a TerminalVals <<< $Terminal
 			THEREQUIREDIP="${TerminalVals[1]}"
-			THEREQUIREDHOSTNAME="${TerminalVals[0]}"		
-			echo "($COUNTERe) $THEREQUIREDHOSTNAME / $THEREQUIREDIP"
+			THEREQUIREDHOSTNAME="${TerminalVals[0]}"
+			if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
+				THEREQUIREDIP=""
+			else
+				THEREQUIREDIP=" ($THEREQUIREDIP)"
+			fi				
+			echo "($COUNTERe) $THEREQUIREDHOSTNAME$THEREQUIREDIP"
 			COUNTERe=$((COUNTERe + 1)) 
-		done
+		done		
 		echo '-----------------------'	
 		echo ''
 		echo -e "${RED}-----------------------${NC}"

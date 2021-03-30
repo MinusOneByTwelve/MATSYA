@@ -1,26 +1,15 @@
-{
-  "K8sMN": {
-    "Cluster": {
-      "Terminals": [
-        {
-          "IPAddress": "192.168.1.18",
-          "Password": "adyah"
-        },      
-        {
-          "IPAddress": "192.168.1.51",
-          "PEM": "/opt/Matsya/matsya-vagvbox-sa-331c7e.pem"
-        },
-        {
-          "IPAddress": "192.168.1.50",
-          "Password": "hgBTjJGJCZ8Ag3z"
-        }        
-      ],
-      "Terminal": [
-        {
-          "SamePassword": "",
-          "SamePEM": ""
-        }
-      ]
-    }
-  }
-}
+{"K8sMN": {"Cluster": {"Terminals": [
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-16-ct7.cluster","Password": "Cent7@123","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-18-posb.cluster","Password": "adyah","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-14-ct8.cluster","Password": "Cent8@123","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-13-fdr.cluster","Password": "Fed@123ora","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-11-deb.cluster","Password": "Debian@123","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-8-ubu0.cluster","Password": "Ubuntu0@123","PEM": ""},
+{"IPAddress": "ubu-local-test.net","Password": "Ubuntu@123","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-10-mnt.cluster","Password": "Mint@123","PEM": ""},
+{"IPAddress": "matsya-k8s-mn-terminal-192-168-1-5-pos.cluster","Password": "adyah","PEM": ""},
+{"IPAddress": "e2e-77-241.ssdcloudindia.net","Password": "","PEM": ""},
+{}],"Terminal": [
+{"SamePassword": "","SamePEM": ""}
+]}}}
+
