@@ -168,17 +168,32 @@ else
 	echo ''	
 fi
 
-read -p "Enter Script Path > " -e -i "" THEREQUIREDFILE
-THEREQUIREDACTUALNAMEFORFILE=$(basename $THEREQUIREDFILE)
-echo ''
+THEREQUIREDFILE=""
+THEREQUIREDACTUALNAMEFORFILE=""
+if [ "$#" -ne 1 ]; then
+	read -p "Enter Script Path > " -e -i "" THEREQUIREDFILE
+	THEREQUIREDACTUALNAMEFORFILE=$(basename $THEREQUIREDFILE)
+	echo ''
+else
+	THEREQUIREDFILE=$1
+	THEREQUIREDACTUALNAMEFORFILE=$(basename $THEREQUIREDFILE)
+fi
+
 if [ -f "$THEREQUIREDFILE" ]
 then
 	ABC="XYZ"
 else
 	exit
 fi
-read -p "Enter Terminal Number(s) To Push (0 For All) > " -e -i "-1" NodeNumber
-echo ''
+
+NodeNumber="-1"
+if [ "$#" -ne 1 ]; then
+	read -p "Enter Terminal Number(s) To Execute (0 For All) > " -e -i "-1" NodeNumber
+	echo ''
+else
+	NodeNumber="0"
+fi
+
 IFS=',' read -r -a CHOICELIST <<< $NodeNumber
 for _CHOICE in "${CHOICELIST[@]}"
 do
