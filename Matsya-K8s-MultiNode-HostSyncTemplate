@@ -45,8 +45,14 @@ echo -e "${GREEN}===============================================================
 echo ''
 echo -e "\x1b[3m\x1b[4mK8s MULTINODE (SYNC) [$CLUSTERNAME]\x1b[m"
 echo ''
-read -p "Enter File Path For Settings > " -e -i "/opt/Matsya/Repo/Sync" NODES_JSON
-echo "                                                                         "
+
+NODES_JSON=""
+if [ "$#" -ne 2 ]; then
+	read -p "Enter File Path For Settings > " -e -i "/opt/Matsya/Repo/Sync" NODES_JSON
+	echo ''
+else
+	NODES_JSON=$1
+fi
 
 if [ -f "$NODES_JSON" ]
 then
@@ -250,14 +256,20 @@ else
 	echo ''	
 fi
 	
-NodeNumber="-1"
-if [ "$#" -ne 1 ]; then
-	read -p "Enter Terminal Number(s) To Sync (0 For All) > " -e -i "-1" NodeNumber
+ContinueChoice="n"
+if [ "$#" -ne 2 ]; then
+	read -p "Initiate Sync ? (y/n) > " -e -i "n" ContinueChoice
 	echo ''
 else
-	NodeNumber="0"
-fi	
-#HOSTS /etc/hosts .Sync	 /home/$CURRENTUSER/.ssh/known_hosts
+	ContinueChoice=$2
+fi
+
+if [ $ContinueChoice == "y" ] || [ $ContinueChoice == "Y" ] ; then
+	ABC="XYZ"
+else
+	exit
+fi
+	
 sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/HOSTS
 sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/ListOfHosts
 sudo touch $BASE/K8sMN/$CLUSTERNAME/HOSTS
@@ -282,6 +294,9 @@ do
 	fi											 
 done
 
+sudo cp $BASE/K8sMN/$CLUSTERNAME/HOSTS $BASE/K8sMN/$CLUSTERNAME/HOSTSBCK
+sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/HOSTSBCK
+
 for Terminal in "${FINAL_TERMINAL_LIST[@]}"
 do
 	IFS='├' read -r -a TerminalVals <<< $Terminal
@@ -289,34 +304,28 @@ do
 	THEREQUIREDHOSTNAME="${TerminalVals[0]}"
 	THEREQUIREDCONNECTPORT="${TerminalVals[3]}"
 	THEORIGINALUSERHERE="${TerminalVals[4]}"
-	THEORIGINALBASEHERE="${TerminalVals[5]}"	
-	echo "$THEREQUIREDHOSTNAME├$THEREQUIREDIP├$THEREQUIREDLANTYPE├$THEREQUIREDCONNECTPORT" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/HOSTS > /dev/null
+	THEORIGINALBASEHERE="${TerminalVals[5]}"
+	THENAMETOBESHOWN=""
 	if [ "$THEREQUIREDIP" == "null" ] || [ "$THEREQUIREDIP" = "" ] ; then
 		THEREQUIREDIP=$THEREQUIREDHOSTNAME
+		THENAMETOBESHOWN=""
+	else
+		THENAMETOBESHOWN=" ($THEREQUIREDIP)"
 	fi
-	scp -P $THEREQUIREDCONNECTPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $BASE/K8sMN/$CLUSTERNAME/HOSTS $THEREQUIREDUSER@$THEREQUIREDIP:$THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER
-	ssh -p $THEREQUIREDCONNECTPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $THEREQUIREDUSER@$THEREQUIREDIP "sudo rm -rf /home/$THEORIGINALUSERHERE/.ssh/known_hosts && sudo rm -rf $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER/.ssh/known_hosts && sudo rm -rf $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/HOSTS"	
+	echo "---------------------"
+	echo "$THEREQUIREDHOSTNAME$THENAMETOBESHOWN"
+	echo "---------------------"
+	echo 'Sync Started...'
+	echo '~~~~~~~~~~~~~~~~~~~~~'	
+	scp -P $THEREQUIREDCONNECTPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $BASE/K8sMN/$CLUSTERNAME/HOSTSBCK $THEREQUIREDUSER@$THEREQUIREDIP:$THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER
+	scp -P $THEREQUIREDCONNECTPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $BASE/K8sMN/$CLUSTERNAME/ListOfHosts $THEREQUIREDUSER@$THEREQUIREDIP:$THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER	
+	ssh -p $THEREQUIREDCONNECTPORT -o "StrictHostKeyChecking=no" -i "$BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem" $THEREQUIREDUSER@$THEREQUIREDIP "sudo rm -rf /home/$THEORIGINALUSERHERE/.ssh/known_hosts && sudo rm -rf $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER/.ssh/known_hosts && sudo rm -rf $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/HOSTS && sudo mv $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER/HOSTSBCK $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/HOSTS && sudo chown root:root $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/HOSTS && sudo chmod u=r,g=,o= $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/HOSTS && sudo chmod 777 $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER/ListOfHosts && cd $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER && sudo ./ListOfHosts && sudo rm -rf ListOfHosts && sudo rm -rf $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/.Sync && SYNCDATE=\$(TZ=Asia/Kolkata date '+%F %T') && echo \"\$SYNCDATE\" | sudo tee $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/.Sync && sudo chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/.Sync && sudo chmod u=r,g=,o= $THEORIGINALBASEHERE/K8sMN/$CLUSTERNAME/.Sync"
+	echo '~~~~~~~~~~~~~~~~~~~~~'
+	echo 'Sync Complete...'
+	echo "---------------------"		
+	echo ''			
 done
-	
-sudo chown root:root $BASE/K8sMN/$CLUSTERNAME/HOSTS
-sudo chmod u=r,g=,o= $BASE/K8sMN/$CLUSTERNAME/HOSTS
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-
-
-
-
-
-
+sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/HOSTSBCK
+sudo rm -rf $BASE/K8sMN/$CLUSTERNAME/ListOfHosts
 
