@@ -17,11 +17,11 @@ BOLD=$(tput bold)
 NORM=$(tput sgr0)
 ORANGE='\033[1;33m'
 
-BASE="/opt/Matsya"
-CLUSTERNAME="Alpha7"
-THEOSNAME="POSB"
-THEREQUIREDUSER="mxHju2Ks6nxa81S"
-ELIGIBLEUSERS="prathamos├mxHju2Ks6nxa81S"
+BASE="BASENAMETOBEUSED"
+CLUSTERNAME="CLUSTERNAMETOBEUSED"
+THEOSNAME="OSNAMETOBEUSED"
+THEREQUIREDUSER="THENAMEOFTHEUSER"
+ELIGIBLEUSERS="USERSELIGIBLE"
 CURRENTUSER=$(whoami)
 THEHOMEREQUIREDFORUSER="$BASE/K8sMN/$CLUSTERNAME/$THEREQUIREDUSER"
 
@@ -69,6 +69,8 @@ GLOBALSSHPORT=$(jq '.K8sMN.Cluster.Terminal[0].SSHPort' $NODES_JSON)
 GLOBALSSHPORT="${GLOBALSSHPORT//$DoubleQuotes/$NoQuotes}"
 GLOBALUSERNAME=$(jq '.K8sMN.Cluster.Terminal[0].UserName' $NODES_JSON)
 GLOBALUSERNAME="${GLOBALUSERNAME//$DoubleQuotes/$NoQuotes}"
+GLOBALOS=$(jq '.K8sMN.Cluster.Terminal[0].OS' $NODES_JSON)
+GLOBALOS="${GLOBALOS//$DoubleQuotes/$NoQuotes}"
 	
 for((j=0;j<$TerminalsCount;j++))
 do
@@ -79,7 +81,8 @@ do
 	TerminalSSHPort=""
 	TerminalTheRqLocation=""
 	TerminalUserName=""
-	TerminalTheRqBase=""	
+	TerminalTheRqBase=""
+	TerminalTheRqOS=""	
 	CHECKIFTOOMIT=$(jq '.K8sMN.Cluster.Terminals['${j}'].OMIT?' $NODES_JSON)
 	CHECKIFTOOMIT="${CHECKIFTOOMIT//$DoubleQuotes/$NoQuotes}"
 	if [ "$CHECKIFTOOMIT" == "null" ] || [ "$CHECKIFTOOMIT" == "" ] ; then
@@ -115,6 +118,22 @@ do
 			TerminalSSHPort="$CHECKIFSSHPORTMISSING"							
 		fi
 
+		CHECKIFOSMISSING=$(jq '.K8sMN.Cluster.Terminals['${j}'].OS?' $NODES_JSON)
+		CHECKIFOSMISSING="${CHECKIFOSMISSING//$DoubleQuotes/$NoQuotes}"
+		if [ "$CHECKIFOSMISSING" == "null" ] || [ "$CHECKIFOSMISSING" = "" ] ; then
+			if [ "$GLOBALOS" == "" ] || [ "$GLOBALOS" == "" ] ; then			
+				echo '-----------------------'					
+				echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'OS' Missing In '$NODES_JSON' For Terminal => $Terminal ($TerminalIP)"
+				echo '-----------------------'
+				echo ''
+				exit
+			else
+				TerminalTheRqOS="$GLOBALOS"
+			fi
+		else
+			TerminalTheRqOS="$CHECKIFOSMISSING"							
+		fi
+
 		CHECKIFBASELOCATIONMISSING=$(jq '.K8sMN.Cluster.Terminals['${j}'].BaseLocation?' $NODES_JSON)
 		CHECKIFBASELOCATIONMISSING="${CHECKIFBASELOCATIONMISSING//$DoubleQuotes/$NoQuotes}"
 		if [ "$CHECKIFBASELOCATIONMISSING" == "null" ] || [ "$CHECKIFBASELOCATIONMISSING" = "" ] ; then
@@ -139,10 +158,42 @@ do
 			TerminalTheRqLocation="$CHECKIFTHELOCATIONMISSING"							
 		fi			
 		
-		FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalTheRqLocation├$TerminalSSHPort├$TerminalUserName├$TerminalTheRqBase")																			
+		CHECKIFRANGEISPRESENT=$(jq '.K8sMN.Cluster.Terminals['${j}'].Range?' $NODES_JSON)
+		CHECKIFRANGEISPRESENT="${CHECKIFRANGEISPRESENT//$DoubleQuotes/$NoQuotes}"
+		if [ "$CHECKIFRANGEISPRESENT" == "null" ] || [ "$CHECKIFRANGEISPRESENT" = "" ] ; then			
+			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalTheRqLocation├$TerminalSSHPort├$TerminalUserName├$TerminalTheRqBase")
+		else
+			if [ "$TerminalIP" == "null" ] || [ "$TerminalIP" = "" ] ; then
+				echo '-----------------------'					
+				echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In '$NODES_JSON' For Terminal => $Terminal"
+				echo '-----------------------'
+				echo ''
+				exit
+			fi
+			
+			REGEXNUMBER='^[0-9]+$'
+			if ! [[ $CHECKIFRANGEISPRESENT =~ $REGEXNUMBER ]] ; then
+				echo '-----------------------'					
+				echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'Range' Needed Numeric In '$NODES_JSON' For Terminal => $Terminal ($TerminalIP)"
+				echo '-----------------------'
+				echo ''
+				exit
+			fi
+									
+			IFS='.' read -r -a IPAddressPieces <<< $TerminalIP
+			STARTPOINT="${IPAddressPieces[3]}"
+			STARTPOINT="$(($STARTPOINT + 0))"
+			ENDPOINT="$(($CHECKIFRANGEISPRESENT + 0))"
+			for((TCounter=STARTPOINT;TCounter<=ENDPOINT;TCounter++))
+			do
+				THENEWIP="${IPAddressPieces[0]}"".""${IPAddressPieces[1]}"".""${IPAddressPieces[2]}""."$TCounter
+				THENEWTERMINALNAME="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"$TCounter"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')".cluster"
+				FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWTERMINALNAME├$THENEWIP├$TerminalTheRqLocation├$TerminalSSHPort├$TerminalUserName├$TerminalTheRqBase")
+			done														
+		fi																																											
 	fi
 done
-	
+
 sudo rm -rf /home/$CURRENTUSER/.ssh/known_hosts
 echo '-----------------------'
 RANDOMFOLDERNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)

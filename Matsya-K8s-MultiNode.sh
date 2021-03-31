@@ -164,8 +164,63 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			else
 				TerminalTheRqLocation="$CHECKIFTHELOCATIONMISSING"							
 			fi			
-									
-			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")																			
+			
+			CHECKIFRANGEISPRESENT=$(jq '.K8sMN.Cluster.Terminals['${j}'].Range?' $NODES_JSON)
+			CHECKIFRANGEISPRESENT="${CHECKIFRANGEISPRESENT//$DoubleQuotes/$NoQuotes}"
+			if [ "$CHECKIFRANGEISPRESENT" == "null" ] || [ "$CHECKIFRANGEISPRESENT" = "" ] ; then			
+				FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")
+			else
+				if [ "$TerminalIP" == "null" ] || [ "$TerminalIP" = "" ] ; then
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In '$NODES_JSON' For Terminal => $Terminal"
+					echo '-----------------------'
+					echo ''
+					exit
+				fi
+				
+				REGEXNUMBER='^[0-9]+$'
+				if ! [[ $CHECKIFRANGEISPRESENT =~ $REGEXNUMBER ]] ; then
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'Range' Needed Numeric In '$NODES_JSON' For Terminal => $Terminal ($TerminalIP)"
+					echo '-----------------------'
+					echo ''
+					exit
+				fi
+				
+				THESECRETSFILE=$(jq '.K8sMN.Cluster.Terminal[0].SecretsFileLocation' $NODES_JSON)
+				THESECRETSFILE="${THESECRETSFILE//$DoubleQuotes/$NoQuotes}"
+				if [ "$THESECRETSFILE" == "" ] || [ "$THESECRETSFILE" == "" ] ; then
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mSecrets File Location Missing !!"
+					echo '-----------------------'
+					echo ''
+					exit
+				fi
+				
+				if [ -f "$THESECRETSFILE" ]
+				then
+					ABC="XYZ"
+				else
+					echo '-----------------------'					
+					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mSecret File Missing !!"
+					echo '-----------------------'
+					echo ''
+					exit
+				fi				
+								
+				IFS='.' read -r -a IPAddressPieces <<< $TerminalIP
+				STARTPOINT="${IPAddressPieces[3]}"
+				STARTPOINT="$(($STARTPOINT + 0))"
+				ENDPOINT="$(($CHECKIFRANGEISPRESENT + 0))"
+				THENEWIP=""
+				THENEWTERMINALNAME=""				
+				for((TCounter=STARTPOINT;TCounter<=ENDPOINT;TCounter++))
+				do
+					THENEWIP=$THENEWIP"${IPAddressPieces[0]}"".""${IPAddressPieces[1]}"".""${IPAddressPieces[2]}""."$TCounter"¬"
+					THENEWTERMINALNAME=$THENEWTERMINALNAME"$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"$TCounter"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')".cluster""¬"										
+				done
+				FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWTERMINALNAME├$THENEWIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")											
+			fi																						
 		fi
 	done
 	
@@ -520,6 +575,44 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo '-----------------------'	
 		echo ''	
 	fi
+	
+	FINAL_BEFORE_CONNECT_TERMINAL_LIST_BCK=("${FINAL_BEFORE_CONNECT_TERMINAL_LIST[@]}")
+	FINAL_BEFORE_CONNECT_TERMINAL_LIST=()
+	for Terminal in "${FINAL_BEFORE_CONNECT_TERMINAL_LIST_BCK[@]}"
+	do
+		SUB='¬'
+		if [[ "$Terminal" == *"$SUB"* ]]; then
+			IFS='├' read -r -a TerminalVals <<< $Terminal
+			
+			THEVAL0="${TerminalVals[0]}"
+			IFS='¬' read -r -a THEVAL0Vals <<< $THEVAL0
+			
+			THEVAL1="${TerminalVals[1]}"
+			IFS='¬' read -r -a THEVAL1Vals <<< $THEVAL1
+			
+			THEVAL2="${TerminalVals[2]}"
+			THEVAL3="${TerminalVals[3]}"
+			THEVAL4="${TerminalVals[4]}"
+			THEVAL5="${TerminalVals[5]}"
+			THEVAL6="${TerminalVals[6]}"
+			THEVAL7="${TerminalVals[7]}"
+			THEVAL8="${TerminalVals[8]}"
+			
+			VCount=0
+			for V in "${THEVAL0Vals[@]}"
+			do
+				if [ "$V" == "" ] || [ "$V" == "" ] ; then
+					ABC='XYZ'
+				else
+					THEIP="${THEVAL1Vals[${VCount}]}"
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$V├$THEIP├$THEVAL2├$THEVAL3├$THEVAL4├$THEVAL5├$THEVAL6├$THEVAL7├$THEVAL8")
+					VCount=$((VCount + 1))
+				fi	
+			done												
+		else
+			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal")		
+		fi			
+	done
 	
 	sudo rm -rf /home/$CURRENTUSER/.ssh/known_hosts
 	echo '-----------------------'
