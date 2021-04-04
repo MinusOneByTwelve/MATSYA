@@ -34,6 +34,8 @@ BASE=$(jq '.K8sMN.Cluster.Terminal[0].BaseLocation' $NODES_JSON)
 BASE="${BASE//$DoubleQuotes/$NoQuotes}"
 sudo mkdir -p $BASE/K8sMN
 sudo mkdir -p $BASE/Repo
+sudo mkdir -p $BASE/tmp
+sudo rm -rf $BASE/tmp/*
 
 CLUSTERNAME=$(jq '.K8sMN.Cluster.Info[0].Name' $NODES_JSON)
 CLUSTERNAME="${CLUSTERNAME//$DoubleQuotes/$NoQuotes}"
@@ -45,7 +47,7 @@ fi
 
 echo "==============================================================================
 
-If '$CLUSTERNAME' Already Exists,Execute
+If '$CLUSTERNAME' Cluster Already Exists,Execute
 
    * sudo $BASE/matsya-k8s-mn-$CLUSTERNAME-kill.sh      
      
@@ -78,6 +80,10 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	
 	FINAL_BEFORE_CONNECT_TERMINAL_LIST=()
 	FINAL_TERMINAL_LIST=()
+	THEACTUALSECRETS=""
+	THESECRETKEY=""
+	GlobalE2EPassword=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+	E2EALLOCATIONHAPPENED="NO"
 						
 	for((j=0;j<$TerminalsCount;j++))
 	do
@@ -169,15 +175,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			CHECKIFRANGEISPRESENT="${CHECKIFRANGEISPRESENT//$DoubleQuotes/$NoQuotes}"
 			if [ "$CHECKIFRANGEISPRESENT" == "null" ] || [ "$CHECKIFRANGEISPRESENT" = "" ] ; then			
 				FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal├$TerminalIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")
-			else
-				if [ "$TerminalIP" == "null" ] || [ "$TerminalIP" = "" ] ; then
-					echo '-----------------------'					
-					echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In '$NODES_JSON' For Terminal => $Terminal"
-					echo '-----------------------'
-					echo ''
-					exit
-				fi
-				
+			else				
 				REGEXNUMBER='^[0-9]+$'
 				if ! [[ $CHECKIFRANGEISPRESENT =~ $REGEXNUMBER ]] ; then
 					echo '-----------------------'					
@@ -206,28 +204,285 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 					echo '-----------------------'
 					echo ''
 					exit
-				fi				
-								
-				IFS='.' read -r -a IPAddressPieces <<< $TerminalIP
-				STARTPOINT="${IPAddressPieces[3]}"
-				STARTPOINT="$(($STARTPOINT + 0))"
-				ENDPOINT="$(($CHECKIFRANGEISPRESENT + 0))"
-				THENEWIP=""
-				THENEWTERMINALNAME=""				
-				for((TCounter=STARTPOINT;TCounter<=ENDPOINT;TCounter++))
-				do
-					THENEWIP=$THENEWIP"${IPAddressPieces[0]}"".""${IPAddressPieces[1]}"".""${IPAddressPieces[2]}""."$TCounter"¬"
-					THENEWTERMINALNAME=$THENEWTERMINALNAME"$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"$TCounter"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')".cluster""¬"										
-				done
-				FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWTERMINALNAME├$THENEWIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")											
+				fi
+				
+				CHECKIFTERRAFORMISPRESENT=$(jq '.K8sMN.Cluster.Terminals['${j}'].Terraform?' $NODES_JSON)
+				CHECKIFTERRAFORMISPRESENT="${CHECKIFTERRAFORMISPRESENT//$DoubleQuotes/$NoQuotes}"
+				if [ "$CHECKIFTERRAFORMISPRESENT" == "null" ] || [ "$CHECKIFTERRAFORMISPRESENT" = "" ] ; then				
+					if [ "$TerminalIP" == "null" ] || [ "$TerminalIP" = "" ] ; then
+						echo '-----------------------'					
+						echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In '$NODES_JSON' For Terminal => $Terminal"
+						echo '-----------------------'
+						echo ''
+						exit
+					fi								
+									
+					IFS='.' read -r -a IPAddressPieces <<< $TerminalIP
+					STARTPOINT="${IPAddressPieces[3]}"
+					STARTPOINT="$(($STARTPOINT + 0))"
+					ENDPOINT="$(($CHECKIFRANGEISPRESENT + 0))"
+					THENEWIP=""
+					THENEWTERMINALNAME=""				
+					for((TCounter=STARTPOINT;TCounter<=ENDPOINT;TCounter++))
+					do
+						THENEWIP=$THENEWIP"${IPAddressPieces[0]}"".""${IPAddressPieces[1]}"".""${IPAddressPieces[2]}""."$TCounter"¬"
+						THENEWTERMINALNAME=$THENEWTERMINALNAME"$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"$TCounter"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')".cluster""¬"										
+					done
+					FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWTERMINALNAME├$THENEWIP├$TerminalUserName├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")
+				else
+					if [ $TerminalTheRqOS == "E2E7" ] || [ $TerminalTheRqOS == "E2E8" ] || [ $TerminalTheRqOS == "E2ED" ] || [ $TerminalTheRqOS == "E2EU" ] ; then
+						CHECKIFTHEDISTROISPRESENT=$(jq '.K8sMN.Cluster.Terminals['${j}'].Distro?' $NODES_JSON)
+						CHECKIFTHEDISTROISPRESENT="${CHECKIFTHEDISTROISPRESENT//$DoubleQuotes/$NoQuotes}"					
+						if [ "$CHECKIFTHEDISTROISPRESENT" == "null" ] || [ "$CHECKIFTHEDISTROISPRESENT" = "0" ] ; then
+							echo '-----------------------'					
+							echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'Distro' Missing In '$NODES_JSON' For Terminal => $Terminal"
+							echo '-----------------------'
+							echo ''
+							exit
+						fi
+						
+						IFS=',' read -r -a CHECKIFTERRAFORMISPRESENTVALS <<< $CHECKIFTERRAFORMISPRESENT
+						THEREGION="${CHECKIFTERRAFORMISPRESENTVALS[0]}"
+						THEFAMILY="${CHECKIFTERRAFORMISPRESENTVALS[1]}"
+						THEREGION=$(echo "${THEREGION##*( )}")
+						THEREGION=$(echo "${THEREGION%%*( )}")
+						THEFAMILY=$(echo "${THEFAMILY##*( )}")
+						THEFAMILY=$(echo "${THEFAMILY%%*( )}")												
+						if [ "$THESECRETKEY" == "null" ] || [ "$THESECRETKEY" = "" ] ; then
+							read -s -p "Enter Secret Key > " -e -i "" THESECRETKEY
+							echo ''	
+							echo ''
+							ITER=${THESECRETKEY:7:6}
+							RANDOMSECFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+							sudo cp $THESECRETSFILE $BASE/tmp/$RANDOMSECFILENAME
+							sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$RANDOMSECFILENAME
+							sudo chmod u=r,g=,o= $BASE/tmp/$RANDOMSECFILENAME
+							REALSECRETSFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+							openssl enc -a -d -aes-256-cbc -pbkdf2 -iter $ITER -k $THESECRETKEY -in $BASE/tmp/$RANDOMSECFILENAME -out $BASE/tmp/$REALSECRETSFILENAME
+							sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$REALSECRETSFILENAME
+							sudo chmod u=r,g=,o= $BASE/tmp/$REALSECRETSFILENAME
+							THEACTUALSECRETS=$(<$BASE/tmp/$REALSECRETSFILENAME)		
+							sudo rm -rf $BASE/tmp/$REALSECRETSFILENAME				
+							sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME						
+						fi
+						APIKey=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.E2E[0].APIKey?")
+						APIKey="${APIKey//$DoubleQuotes/$NoQuotes}"
+						TokenName=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.E2E[0].TokenName?")
+						TokenName="${TokenName//$DoubleQuotes/$NoQuotes}"
+						AuthToken=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.E2E[0].AuthToken?")
+						AuthToken="${AuthToken//$DoubleQuotes/$NoQuotes}"
+						SSHKey=$(echo $THEACTUALSECRETS | jq -c ".K8sMN.Cluster.E2E[0].SSHKey?")
+						SSHKey="${SSHKey//$DoubleQuotes/$NoQuotes}"
+						if [ "$APIKey" == "null" ] || [ "$APIKey" = "" ] ; then
+							echo '-----------------------'					
+							echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'APIKey' Missing In '$NODES_JSON' For Terminal => $Terminal"
+							echo '-----------------------'
+							echo ''
+							exit
+						fi
+						if [ "$TokenName" == "null" ] || [ "$TokenName" = "" ] ; then
+							echo '-----------------------'					
+							echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'TokenName' Missing In '$NODES_JSON' For Terminal => $Terminal"
+							echo '-----------------------'
+							echo ''
+							exit
+						fi
+						if [ "$AuthToken" == "null" ] || [ "$AuthToken" = "" ] ; then
+							echo '-----------------------'					
+							echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'AuthToken' Missing In '$NODES_JSON' For Terminal => $Terminal"
+							echo '-----------------------'
+							echo ''
+							exit
+						fi
+						if [ "$SSHKey" == "null" ] || [ "$SSHKey" = "" ] ; then
+							echo '-----------------------'					
+							echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'SSHKey' Missing In '$NODES_JSON' For Terminal => $Terminal"
+							echo '-----------------------'
+							echo ''
+							exit 
+						fi
+						GlobalE2EPEMFile="$BASE/Repo/Matsya-SetUp-SSHE2E.pem"
+						sudo chown $CURRENTUSER:$CURRENTUSER $GlobalE2EPEMFile
+						sudo chmod 400 $GlobalE2EPEMFile
+						E2EMatsyaUserCreationCode=""
+						if [ $TerminalTheRqOS == "E2E7" ] || [ $TerminalTheRqOS == "E2E8" ] ; then
+							E2EMatsyaUserCreationCode="sudo useradd -d /home/matsya -s /bin/bash -m matsya && sudo usermod -p \$(echo \"$GlobalE2EPassword\" | openssl passwd -1 -stdin) matsya && sudo usermod -aG wheel matsya && sudo rm -f /etc/sudoers.d/matsya-user && echo \"matsya ALL=(ALL) NOPASSWD:ALL\" | sudo tee /etc/sudoers.d/matsya-user > /dev/null && sudo sed -i -e s~\"PasswordAuthentication\"~\"#PasswordAuthentication\"~g /etc/ssh/sshd_config && sudo sed -i -e s~\"PermitRootLogin\"~\"#PermitRootLogin\"~g /etc/ssh/sshd_config && echo \"PasswordAuthentication yes\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo systemctl restart sshd.service && sudo rm -rf /root/.ssh/authorized_keys"
+						fi
+						if [ $TerminalTheRqOS == "E2ED" ] || [ $TerminalTheRqOS == "E2EU" ] ; then
+							E2EMatsyaUserCreationCode="sudo useradd -d /home/matsya -s /bin/bash -m matsya && sudo usermod -p \$(echo \"$GlobalE2EPassword\" | openssl passwd -1 -stdin) matsya && sudo usermod -aG sudo matsya && sudo rm -f /etc/sudoers.d/matsya-user && echo \"matsya ALL=(ALL) NOPASSWD:ALL\" | sudo tee /etc/sudoers.d/matsya-user > /dev/null && sudo sed -i -e s~\"PasswordAuthentication\"~\"#PasswordAuthentication\"~g /etc/ssh/sshd_config && sudo sed -i -e s~\"PermitRootLogin\"~\"#PermitRootLogin\"~g /etc/ssh/sshd_config && echo \"PasswordAuthentication yes\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo systemctl restart sshd.service && sudo rm -rf /root/.ssh/authorized_keys"
+						fi
+						
+						echo -e "${RED}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+						echo -e "${BOLD}\x1b[3m\x1b[30;44m    ROUGE E2E PLANETARY SYSTEM ENCOUNTERED    \x1b[m${NORM}${BLUE}${BOLD}"
+						echo -e "${RED}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+						echo ''
+						echo -e "${GREEN}Kryptonian${NC}  : \x1b[3mOrders Sir !!"
+						echo ''
+						sleep 2						
+						echo -e "${GREEN}General Zod${NC} : Release The World Engine"
+						sleep 2						
+						echo -e "              Bring The Phantom Drive Online"
+						sleep 2						
+						echo -e "${RED}${BOLD}              INITIATE TERRAFORMING${NORM}${NC}"
+						sleep 1						
+						echo ''
+						echo -e "              \x1b[3m\x1b[4mhttp://bit.ly/InitiateTerraform"
+						echo ''						
+						sleep 1
+						echo -e "${RED}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+						echo ''
+						
+						sudo rm -rf $BASE/tmp/*
+						sudo rm -rf /home/$CURRENTUSER/.ssh/known_hosts
+						
+						STARTPOINT=1
+						STARTPOINT="$(($STARTPOINT + 0))"
+						ENDPOINT="$(($CHECKIFRANGEISPRESENT + 0))"
+						THENEWIP=""
+						THENEWTERMINALNAME=""
+						E2ERESPONSE=""				
+						for((TCounter=STARTPOINT;TCounter<=ENDPOINT;TCounter++))
+						do												
+							echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+							RANDOMINSTANCENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+							RANDOMRESPONSEFILE=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+							RANDOMINSTANCENEWNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)								
+							sudo cp $BASE/Repo/Matsya-SetUp-E2ENewTerminal $BASE/tmp/$RANDOMINSTANCENAME
+							sudo chmod 777 $BASE/tmp/$RANDOMINSTANCENAME 
+							sed -i -e s~"E2ETHEAPIKEY"~"$APIKey"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEAUTHTOKEN"~"$AuthToken"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHETOKENNAME"~"$TokenName"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHENAMEOFINSTANCE"~"$RANDOMINSTANCENAME"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEREGION"~"$THEREGION"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEPLAN"~"$THEFAMILY"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEDISTRO"~"$CHECKIFTHEDISTROISPRESENT"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHESSHKEYS"~"$SSHKey"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEPLACETOSAVERESPONSE"~"$BASE/tmp/$RANDOMRESPONSEFILE"~g $BASE/tmp/$RANDOMINSTANCENAME												
+							(
+								set -Ee
+								function _catch {
+									echo "ERROR"
+									exit 0
+								}
+								function _finally {
+									ABC="XYZ"
+								}
+								trap _catch ERR
+								trap _finally EXIT
+								sudo $BASE/tmp/$RANDOMINSTANCENAME								
+							)
+							E2ERESPONSE=$(<$BASE/tmp/$RANDOMRESPONSEFILE)							
+							E2ECODE=$(echo $E2ERESPONSE | jq -c ".code")
+							E2ECODE="${E2ECODE//$DoubleQuotes/$NoQuotes}"
+							if [ "$E2ECODE" == "200" ] || [ "$E2ECODE" = "200" ] ; then
+								E2EMESSAGE=$(echo $E2ERESPONSE | jq -c ".message")
+								E2EMESSAGE="${E2EMESSAGE//$DoubleQuotes/$NoQuotes}"
+								if [ "$E2EMESSAGE" == "Success" ] || [ "$E2EMESSAGE" = "Success" ] ; then
+									E2EINSTANCEID=$(echo $E2ERESPONSE | jq -c ".data.id")
+									E2EINSTANCEID="${E2EINSTANCEID//$DoubleQuotes/$NoQuotes}"
+									E2EINSTANCEIP=$(echo $E2ERESPONSE | jq -c ".data.public_ip_address")
+									E2EINSTANCEIP="${E2EINSTANCEIP//$DoubleQuotes/$NoQuotes}"
+									IFS='.' read -r -a IPAddressPieces <<< $E2EINSTANCEIP							
+									THENEWIP=$THENEWIP"$E2EINSTANCEIP¬"
+									THENEWNAME="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"${IPAddressPieces[3]}"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')"-$E2EINSTANCEID"".cluster"
+									THENEWNAME2="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"${IPAddressPieces[3]}"-"$TerminalTheRqOS"-$E2EINSTANCEID"
+									THENEWTERMINALNAME=$THENEWTERMINALNAME$THENEWNAME"¬"
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo -e "${GREEN}Kryptonian${NC}  : ${YELLOW}\x1b[3m$THENEWNAME ($E2EINSTANCEIP) Is Now Slave To The World Engine...${NC}"
+									sudo cp $BASE/Repo/Matsya-SetUp-E2ENameTerminal $BASE/tmp/$RANDOMINSTANCENEWNAME
+									sudo chmod 777 $BASE/tmp/$RANDOMINSTANCENEWNAME 
+									sed -i -e s~"E2ETHEAPIKEY"~"$APIKey"~g $BASE/tmp/$RANDOMINSTANCENEWNAME
+									sed -i -e s~"E2ETHEAUTHTOKEN"~"$AuthToken"~g $BASE/tmp/$RANDOMINSTANCENEWNAME
+									sed -i -e s~"E2ETHENEWNODEID"~"$E2EINSTANCEID"~g $BASE/tmp/$RANDOMINSTANCENEWNAME
+									sed -i -e s~"E2ETHENEWNODENAME"~"$THENEWNAME2"~g $BASE/tmp/$RANDOMINSTANCENEWNAME
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									(
+										set -Ee
+										function _catch {
+											echo "ERROR"
+											exit 0
+										}
+										function _finally {
+											ABC="XYZ"
+										}
+										trap _catch ERR
+										trap _finally EXIT
+										sudo $BASE/tmp/$RANDOMINSTANCENEWNAME								
+									)
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo -e "${GREEN}Kryptonian${NC}  : ${YELLOW}\x1b[3mHarvesting Resources...${NC}"
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									TempCounter=0
+									while [ $TempCounter -lt 1 ]
+									do
+										THEFIRSTCONNECTE2E=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+										touch $BASE/tmp/$THEFIRSTCONNECTE2E	
+										sudo chmod 777 $BASE/tmp/$THEFIRSTCONNECTE2E
+																				
+										(
+										set -Ee
+										function _catch {
+											echo "ERROR"
+											exit 0
+										}
+										function _finally {
+											ABC="XYZ"
+										}
+										trap _catch ERR
+										trap _finally EXIT
+										THERESPONSE=$(ssh -o ConnectTimeout=15 -o BatchMode=yes -o PasswordAuthentication=no root@$E2EINSTANCEIP -p $TerminalSSHPort -o "StrictHostKeyChecking=no" -i $GlobalE2EPEMFile "echo \"$THEFIRSTCONNECTE2E\"")
+										echo "$THERESPONSE" >> $BASE/tmp/$THEFIRSTCONNECTE2E		
+										)
+										
+										THERESULT="NO"
+										LINE=$(<$BASE/tmp/$THEFIRSTCONNECTE2E)
+										if [ "$LINE" == "$THEFIRSTCONNECTE2E" ] || [ "$LINE" == "$THEFIRSTCONNECTE2E" ] ; then
+											ssh -o ConnectTimeout=15 -o BatchMode=yes -o PasswordAuthentication=no root@$E2EINSTANCEIP -p $TerminalSSHPort -o "StrictHostKeyChecking=no" -i $GlobalE2EPEMFile "$E2EMatsyaUserCreationCode"
+											echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+											echo -e "${GREEN}Kryptonian${NC}  : ${YELLOW}${BOLD}\x1b[3mTerraforming Complete${NORM}${NC}"
+											sudo rm -rf $BASE/tmp/$THEFIRSTCONNECTE2E
+											TempCounter=$((TempCounter + 1))
+											THERESULT="YES"
+											E2EALLOCATIONHAPPENED="YES"
+										else
+											sudo rm -rf $BASE/tmp/$THEFIRSTCONNECTE2E									
+										fi
+										if [ "$THERESULT" == "NO" ] || [ "$THERESULT" == "NO" ] ; then
+											sleep 10
+										fi
+									done									
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo ''								
+								else
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo -e "${GREEN}Kryptonian${NC}  : ${RED}${BOLD}\x1b[3mKal-El Destroyed The World Engine !!!${NORM}${NC}"
+									echo -e "            : $E2ERESPONSE"									
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo ''
+								fi	 
+							else
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo -e "${GREEN}Kryptonian${NC}  : ${RED}${BOLD}\x1b[3mKal-El Destroyed The World Engine !!!${NORM}${NC}"
+									echo -e "            : $E2ERESPONSE"									
+									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+									echo ''
+							fi
+							sudo rm -rf $BASE/tmp/$RANDOMINSTANCENAME
+							sudo rm -rf $BASE/tmp/$RANDOMRESPONSEFILE
+							sudo rm -rf $BASE/tmp/$RANDOMINSTANCENEWNAME
+						done
+						FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWTERMINALNAME├$THENEWIP├$TerminalUserName¬$GlobalE2EPassword├$TerminalSSHPort├$TerminalTheRqOS├$TerminalTheRqBase├$TerminalTheRqLocation")						
+						echo -e "${RED}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
+						echo ''				
+					fi
+				fi											
 			fi																						
 		fi
 	done
-	
+	echo "${FINAL_BEFORE_CONNECT_TERMINAL_LIST[*]}" && exit
 	sudo mkdir -p $BASE/tmp
 	sudo chmod -R 777 $BASE/tmp
 	SECRETSAVAILABLE=""
-	THEACTUALSECRETS=""
 	THESECRETSFILE=$(jq '.K8sMN.Cluster.Terminal[0].SecretsFileLocation' $NODES_JSON)
 	THESECRETSFILE="${THESECRETSFILE//$DoubleQuotes/$NoQuotes}"
 	if [ "$THESECRETSFILE" == "" ] || [ "$THESECRETSFILE" == "" ] ; then
@@ -245,21 +500,23 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			exit
 		fi				
 		echo '-----------------------'
-		echo ''		
-		read -s -p "Enter Secret Key > " -e -i "" THESECRETKEY
-		echo ''	
-		ITER=${THESECRETKEY:7:6}
-		RANDOMSECFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-		sudo cp $THESECRETSFILE $BASE/tmp/$RANDOMSECFILENAME
-		sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$RANDOMSECFILENAME
-		sudo chmod u=r,g=,o= $BASE/tmp/$RANDOMSECFILENAME
-		REALSECRETSFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-		openssl enc -a -d -aes-256-cbc -pbkdf2 -iter $ITER -k $THESECRETKEY -in $BASE/tmp/$RANDOMSECFILENAME -out $BASE/tmp/$REALSECRETSFILENAME
-		sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$REALSECRETSFILENAME
-		sudo chmod u=r,g=,o= $BASE/tmp/$REALSECRETSFILENAME
-		THEACTUALSECRETS=$(<$BASE/tmp/$REALSECRETSFILENAME)		
-		sudo rm -rf $BASE/tmp/$REALSECRETSFILENAME				
-		sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME		
+		if [ "$THESECRETKEY" == "null" ] || [ "$THESECRETKEY" = "" ] ; then		
+			echo ''		
+			read -s -p "Enter Secret Key > " -e -i "" THESECRETKEY
+			echo ''	
+			ITER=${THESECRETKEY:7:6}
+			RANDOMSECFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			sudo cp $THESECRETSFILE $BASE/tmp/$RANDOMSECFILENAME
+			sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$RANDOMSECFILENAME
+			sudo chmod u=r,g=,o= $BASE/tmp/$RANDOMSECFILENAME
+			REALSECRETSFILENAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
+			openssl enc -a -d -aes-256-cbc -pbkdf2 -iter $ITER -k $THESECRETKEY -in $BASE/tmp/$RANDOMSECFILENAME -out $BASE/tmp/$REALSECRETSFILENAME
+			sudo chown $CURRENTUSER:$CURRENTUSER $BASE/tmp/$REALSECRETSFILENAME
+			sudo chmod u=r,g=,o= $BASE/tmp/$REALSECRETSFILENAME
+			THEACTUALSECRETS=$(<$BASE/tmp/$REALSECRETSFILENAME)		
+			sudo rm -rf $BASE/tmp/$REALSECRETSFILENAME				
+			sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME
+		fi		
 	fi	
 				
 	GLOBALPASSWORD=""		
@@ -644,11 +901,11 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		}
 		trap _catch ERR
 		trap _finally EXIT
-		if [ $THEREQUIREDAUTH == "PASSWORD" ] || [ $THEREQUIREDAUTH == "PASSWORD" ] ; then
+		if [ "$THEREQUIREDAUTH" == "PASSWORD" ] || [ "$THEREQUIREDAUTH" == "PASSWORD" ] ; then
 			THERESPONSE=$(sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT  -o "StrictHostKeyChecking=no" "echo \"$RANDOMFOLDERNAME\"")
 			echo "$Terminal├$THERESPONSE" >> $RANDOMFOLDERNAME		
 		fi
-		if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
+		if [ "$THEREQUIREDAUTH" == "PEM" ] || [ "$THEREQUIREDAUTH" == "PEM" ] ; then
 			sudo cp $THEREQUIREDACCESS ThePemFile
 			sudo chown $CURRENTUSER:$CURRENTUSER ThePemFile
 			sudo chmod 400 ThePemFile

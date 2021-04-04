@@ -48,7 +48,7 @@ while read Terminal; do
 	THEREQUIREDIP="${TerminalVals[1]}"
 	THEREQUIREDHOSTNAME="${TerminalVals[0]}"
 	THEREQUIREDLAN="${TerminalVals[2]}"
-	if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "GCP" ] || [ $THEOSNAME == "AZR" ] || [ $THEOSNAME == "CLD" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "E2E8" ] ; then
+	if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "GCP" ] || [ $THEOSNAME == "AZR" ] || [ $THEOSNAME == "CLD" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "E2ED" ] || [ $THEOSNAME == "E2EU" ] ; then
 		if [ $THEREQUIREDLAN == "PUBLIC" ] || [ $THEOSNAME == "PUBLIC" ] ; then			
 			FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$Terminal")
 		fi
