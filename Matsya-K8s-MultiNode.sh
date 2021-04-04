@@ -479,7 +479,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			fi																						
 		fi
 	done
-	echo "${FINAL_BEFORE_CONNECT_TERMINAL_LIST[*]}" && exit
+	
 	sudo mkdir -p $BASE/tmp
 	sudo chmod -R 777 $BASE/tmp
 	SECRETSAVAILABLE=""
@@ -854,6 +854,14 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 			THEVAL6="${TerminalVals[6]}"
 			THEVAL7="${TerminalVals[7]}"
 			THEVAL8="${TerminalVals[8]}"
+			
+			if [ "$E2EALLOCATIONHAPPENED" == "YES" ] || [ "$E2EALLOCATIONHAPPENED" == "YES" ] ; then
+				if [ "$THEVAL8" == "AUTO" ] || [ "$THEVAL8" == "AUTO" ] ; then
+					IFS='¬' read -r -a THEVAL2Vals <<< $THEVAL2
+					THEVAL2="${THEVAL2Vals[0]}"
+					THEVAL8="${THEVAL2Vals[1]}"
+				fi			
+			fi
 			
 			VCount=0
 			for V in "${THEVAL0Vals[@]}"
@@ -1314,6 +1322,9 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo -e "${RED}-----------------------${NC}"
 		echo -e "${BOLD}FELLOWSHIP => $CLUSTERNAME${NORM}"		
 		echo -e "${RED}$RANDOMUSERNAME => $RANDOMPASSWORD${NC}"
+		if [ "$E2EALLOCATIONHAPPENED" == "YES" ] || [ "$E2EALLOCATIONHAPPENED" == "YES" ] ; then
+			echo -e "${RED}E2E (matsya) => $GlobalE2EPassword${NC}"		
+		fi
 		echo -e "${RED}-----------------------${NC}"	
 		echo "* $BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.pem
 * $BASE/matsya-k8s-mn-$CLUSTERNAME-terminal.ppk"
