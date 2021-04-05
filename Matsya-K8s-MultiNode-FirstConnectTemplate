@@ -53,12 +53,11 @@ if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "E2E7" ] ; then
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
 enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
 	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 	sudo systemctl enable --now kubelet
 	sudo sed -i "s/GSSAPIAuthentication/#GSSAPIAuthentication/g" /etc/ssh/sshd_config
@@ -73,7 +72,19 @@ if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "CT8" 
 	sudo setenforce 0
 	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 	sudo yum -y install epel-release
-	sudo sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/CentOS-HA.repo
+	THECENTOSHAREPO="/etc/yum.repos.d/CentOS-HA.repo"
+	if [ -f "$THECENTOSHAREPO" ]
+	then
+		sudo sed -i "s/enabled=0/enabled=1/g" /etc/yum.repos.d/CentOS-HA.repo
+	else
+		echo "[HighAvailability]
+name=CentOS-\$releasever - HA
+mirrorlist=http://mirrorlist.centos.org/?release=\$releasever&arch=\$basearch&repo=HighAvailability&infra=\$infra
+#baseurl=http://mirror.centos.org/\$contentdir/\$releasever/HighAvailability/\$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial" | sudo tee /etc/yum.repos.d/CentOS-HA.repo > /dev/null
+	fi	
 	sudo yum install -y jq openssh-server openssh-clients sshpass curl wget haproxy ca-certificates curl gnupg gnupg2 corosync pcs pacemaker haproxy haveged
 	sudo yum install -y yum-utils
 	sudo rm -rf /etc/yum.repos.d/hashicorp.repo
@@ -82,16 +93,25 @@ if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "CT8" 
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
 	sudo yum remove buildah* -y && sudo yum remove podman* -y && VERSION=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | grep tag_name | cut -d '"' -f 4 | sed -e "s#v##") && URL='https://download.docker.com/linux/centos/8/x86_64/stable/Packages/'$(wget -q -O- https://download.docker.com/linux/centos/8/x86_64/stable/Packages/ | grep href | grep .el8.x86_64.rpm | grep containerd.io- | grep $VERSION | sed -e "s#<a href=\"##" | sort -r | head -n1 | awk '{split($0,a,">"); print a[1]}' | sed -e "s#\"##") && sudo yum install -y $URL
-	sudo yum install -y docker-ce docker-ce-cli && sudo systemctl enable docker && sudo systemctl start docker && sudo docker run hello-world
+	sudo yum install -y docker-ce docker-ce-cli 
+	sudo systemctl enable docker 
+	sudo systemctl start docker
+	if [ $THEOSNAME == "E2E8" ] ; then
+		echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf > /dev/null
+		echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf > /dev/null
+		sudo systemctl daemon-reload
+		sudo systemctl restart docker
+		sudo systemctl status docker
+	fi	 
+	sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
 enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
 	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 	sudo systemctl enable --now kubelet
 	sudo sed -i "s/GSSAPIAuthentication/#GSSAPIAuthentication/g" /etc/ssh/sshd_config
@@ -118,8 +138,8 @@ if [ $THEOSNAME == "FDR" ] || [ $THEOSNAME == "FDR" ] ; then
 name=Kubernetes
 baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
 enabled=1
-gpgcheck=1
-repo_gpgcheck=1
+gpgcheck=0
+repo_gpgcheck=0
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
 	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
@@ -132,10 +152,24 @@ exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /
 	sudo systemctl status sshd
 fi
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "E2ED" ] || [ $THEOSNAME == "E2EU" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "E2EU" ] ; then
 	sudo rm -rf /var/lib/dpkg/lock-frontend
 	sudo rm -rf /var/lib/dpkg/lock
-	sudo apt-get install -y jq ssh sshpass curl wget heartbeat haproxy apt-transport-https ca-certificates curl gnupg gnupg2 software-properties-common lsb-release gnupg-agent corosync pcs pacemaker haproxy haveged
+	sudo apt-get update -y
+	sudo apt-get install -y jq sshpass curl wget heartbeat haproxy apt-transport-https ca-certificates curl gnupg gnupg2 software-properties-common lsb-release gnupg-agent corosync pcs pacemaker haproxy haveged
+fi
+
+if [ $THEOSNAME == "E2ED" ] || [ $THEOSNAME == "E2ED" ] ; then
+	sudo rm -rf /var/lib/dpkg/lock-frontend
+	sudo rm -rf /var/lib/dpkg/lock
+	echo "ssh hold" | sudo dpkg --set-selections
+	sudo apt-mark hold ssh
+	echo "openssh-server hold" | sudo dpkg --set-selections
+	sudo apt-mark hold openssh-server	
+	echo "openssh-client hold" | sudo dpkg --set-selections
+	sudo apt-mark hold openssh-client	
+	sudo apt-get update -y --force-yes
+	sudo apt-get install -y jq sshpass curl wget heartbeat haproxy apt-transport-https ca-certificates curl gnupg gnupg2 software-properties-common lsb-release gnupg-agent corosync pcs pacemaker haproxy haveged --force-yes
 fi
 
 if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "E2EU" ] ; then

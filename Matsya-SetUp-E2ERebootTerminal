@@ -1,0 +1,10 @@
+#!/bin/bash
+
+E2ERESPONSE=$(curl -X POST \
+  'https://api.e2enetworks.com/myaccount/api/v1/nodes/E2ETHENEWNODEID/actions/?apikey=E2ETHEAPIKEY' \
+  -H 'Authorization: Bearer     E2ETHEAUTHTOKEN' \
+  -H 'Postman-Token: E2ETHETOKENNAME' \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{"type": "reboot"}')
+

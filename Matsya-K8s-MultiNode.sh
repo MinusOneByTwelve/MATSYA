@@ -357,7 +357,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 							sed -i -e s~"E2ETHEPLAN"~"$THEFAMILY"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHEDISTRO"~"$CHECKIFTHEDISTROISPRESENT"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHESSHKEYS"~"$SSHKey"~g $BASE/tmp/$RANDOMINSTANCENAME
-							sed -i -e s~"E2ETHEPLACETOSAVERESPONSE"~"$BASE/tmp/$RANDOMRESPONSEFILE"~g $BASE/tmp/$RANDOMINSTANCENAME												
+							sed -i -e s~"E2ETHEPLACETOSAVERESPONSE"~"$BASE/tmp/$RANDOMRESPONSEFILE"~g $BASE/tmp/$RANDOMINSTANCENAME
 							(
 								set -Ee
 								function _catch {
@@ -384,8 +384,8 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 									E2EINSTANCEIP="${E2EINSTANCEIP//$DoubleQuotes/$NoQuotes}"
 									IFS='.' read -r -a IPAddressPieces <<< $E2EINSTANCEIP							
 									THENEWIP=$THENEWIP"$E2EINSTANCEIP¬"
-									THENEWNAME="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"${IPAddressPieces[3]}"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')"-$E2EINSTANCEID"".cluster"
-									THENEWNAME2="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"${IPAddressPieces[3]}"-"$TerminalTheRqOS"-$E2EINSTANCEID"
+									THENEWNAME="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"${IPAddressPieces[3]}"-"$(echo "$TerminalTheRqOS" | tr '[:upper:]' '[:lower:]')"-$E2EINSTANCEID""-"$(echo "$THEREGION" | tr '[:upper:]' '[:lower:]')".cluster"
+									THENEWNAME2="$Terminal-""${IPAddressPieces[0]}""-""${IPAddressPieces[1]}""-""${IPAddressPieces[2]}""-"${IPAddressPieces[3]}"-"$TerminalTheRqOS"-$E2EINSTANCEID""-"$(echo "$THEREGION" | tr '[:lower:]' '[:upper:]')
 									THENEWTERMINALNAME=$THENEWTERMINALNAME$THENEWNAME"¬"
 									echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
 									echo -e "${GREEN}Kryptonian${NC}  : ${YELLOW}\x1b[3m$THENEWNAME ($E2EINSTANCEIP) Is Now Slave To The World Engine...${NC}"
@@ -436,7 +436,19 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 										
 										THERESULT="NO"
 										LINE=$(<$BASE/tmp/$THEFIRSTCONNECTE2E)
-										if [ "$LINE" == "$THEFIRSTCONNECTE2E" ] || [ "$LINE" == "$THEFIRSTCONNECTE2E" ] ; then
+										if [ "$LINE" == "$THEFIRSTCONNECTE2E" ] || [ "$LINE" == "$THEFIRSTCONNECTE2E" ] ; then										
+										E2EHOSTDETAILSETUP="sudo systemctl stop one-context && sudo systemctl disable one-context && sudo rm -rf /etc/hosts && sudo rm -rf /etc/hostname && echo \"
+127.0.0.1 localhost
+# The following lines are desirable for IPv6 capable hosts
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
+$E2EINSTANCEIP	$THENEWNAME
+\" | sudo tee -a /etc/hosts > /dev/null && echo \"$THENEWNAME\" | sudo tee -a /etc/hostname > /dev/null"										
+											ssh -o ConnectTimeout=15 -o BatchMode=yes -o PasswordAuthentication=no root@$E2EINSTANCEIP -p $TerminalSSHPort -o "StrictHostKeyChecking=no" -i $GlobalE2EPEMFile "$E2EHOSTDETAILSETUP"
 											ssh -o ConnectTimeout=15 -o BatchMode=yes -o PasswordAuthentication=no root@$E2EINSTANCEIP -p $TerminalSSHPort -o "StrictHostKeyChecking=no" -i $GlobalE2EPEMFile "$E2EMatsyaUserCreationCode"
 											echo -e "${PURPLE}¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬${NC}"
 											echo -e "${GREEN}Kryptonian${NC}  : ${YELLOW}${BOLD}\x1b[3mTerraforming Complete${NORM}${NC}"
