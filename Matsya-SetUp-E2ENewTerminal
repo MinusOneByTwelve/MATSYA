@@ -1,7 +1,7 @@
 #!/bin/bash
 
 E2ERESPONSE=$(curl -X POST \
-  'https://api.e2enetworks.com/myaccount/api/v1/nodes/?apikey=E2ETHEAPIKEY' \
+  'https://api.e2enetworks.com/myaccount/api/v1/nodes/?apikey=E2ETHEAPIKEY&location=E2ETHEVMLOCATION' \
   -H 'Authorization: Bearer     E2ETHEAUTHTOKEN' \
   -H 'Content-Type: application/json' \
   -H 'Postman-Token: E2ETHETOKENNAME' \

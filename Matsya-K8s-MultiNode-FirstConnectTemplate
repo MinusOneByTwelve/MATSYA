@@ -68,7 +68,53 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cl
 	sudo systemctl status sshd
 fi
 
-if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "CT8" ] ; then
+if [ $THEOSNAME == "E2E8" ] ; then
+	sudo setenforce 0
+	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+	sudo yum -y install epel-release
+	echo "[HighAvailability]
+name=CentOS-\$releasever - HA
+mirrorlist=http://mirrorlist.centos.org/?release=\$releasever&arch=\$basearch&repo=HighAvailability&infra=\$infra
+#baseurl=http://mirror.centos.org/\$contentdir/\$releasever/HighAvailability/\$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial" | sudo tee /etc/yum.repos.d/CentOS-HA.repo > /dev/null	
+	sudo yum install -y jq openssh-server openssh-clients sshpass curl wget haproxy ca-certificates curl gnupg gnupg2 corosync pcs pacemaker haproxy haveged
+	sudo yum install -y yum-utils
+	sudo rm -rf /etc/yum.repos.d/hashicorp.repo
+	release="RHEL" && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
+	sudo yum install -y terraform
+	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
+	echo "[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
+	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+	sudo systemctl enable --now kubelet
+	sudo sed -i "s/GSSAPIAuthentication/#GSSAPIAuthentication/g" /etc/ssh/sshd_config
+	sudo sed -i "s/GSSAPICleanupCredentials/#GSSAPICleanupCredentials/g" /etc/ssh/sshd_config
+	sudo sed -i "s/AuthorizedKeysFile/#AuthorizedKeysFile/g" /etc/ssh/sshd_config
+	echo "AuthorizedKeysFile %h/.ssh/authorized_keys" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+	sudo systemctl restart sshd
+	sudo systemctl status sshd	
+	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
+	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+	sudo yum remove buildah* -y && sudo yum remove podman* -y && VERSION=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | grep tag_name | cut -d '"' -f 4 | sed -e "s#v##") && URL='https://download.docker.com/linux/centos/8/x86_64/stable/Packages/'$(wget -q -O- https://download.docker.com/linux/centos/8/x86_64/stable/Packages/ | grep href | grep .el8.x86_64.rpm | grep containerd.io- | grep $VERSION | sed -e "s#<a href=\"##" | sort -r | head -n1 | awk '{split($0,a,">"); print a[1]}' | sed -e "s#\"##") && sudo yum install -y $URL
+	sudo yum install -y docker-ce docker-ce-cli 
+	sudo systemctl enable docker 
+	sudo systemctl start docker
+	echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf > /dev/null
+	echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf > /dev/null
+	sudo systemctl daemon-reload
+	sudo systemctl restart docker
+	sudo systemctl status docker	 
+	sudo docker run hello-world
+fi
+
+if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "CT8" ] ; then
 	sudo setenforce 0
 	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 	sudo yum -y install epel-release

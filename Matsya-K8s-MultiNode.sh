@@ -349,11 +349,22 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 							RANDOMINSTANCENEWNAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)								
 							sudo cp $BASE/Repo/Matsya-SetUp-E2ENewTerminal $BASE/tmp/$RANDOMINSTANCENAME
 							sudo chmod 777 $BASE/tmp/$RANDOMINSTANCENAME 
+							
+							THEACTUALREGION="$THEREGION"
+							E2ETHEVMLOCATION="Delhi"
+							if [ "$THEREGION" == "mumbai" ] ; then
+								CityReplace="DISK-MUM"
+								THEFAMILY="${THEFAMILY/DISK/$CityReplace}"
+								THEACTUALREGION="ncr"
+								E2ETHEVMLOCATION="Mumbai"
+							fi
+							
 							sed -i -e s~"E2ETHEAPIKEY"~"$APIKey"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEVMLOCATION"~"$E2ETHEVMLOCATION"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHEAUTHTOKEN"~"$AuthToken"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHETOKENNAME"~"$TokenName"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHENAMEOFINSTANCE"~"$RANDOMINSTANCENAME"~g $BASE/tmp/$RANDOMINSTANCENAME
-							sed -i -e s~"E2ETHEREGION"~"$THEREGION"~g $BASE/tmp/$RANDOMINSTANCENAME
+							sed -i -e s~"E2ETHEREGION"~"$THEACTUALREGION"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHEPLAN"~"$THEFAMILY"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHEDISTRO"~"$CHECKIFTHEDISTROISPRESENT"~g $BASE/tmp/$RANDOMINSTANCENAME
 							sed -i -e s~"E2ETHESSHKEYS"~"$SSHKey"~g $BASE/tmp/$RANDOMINSTANCENAME
@@ -1189,6 +1200,9 @@ $E2EINSTANCEIP	$THENEWNAME
 					sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME
 				fi				
 				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /root/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /home/$THEREQUIREDUSER/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/$RANDOMUSERNAME/.bash_history"						
+				if [ $THEREQUIREDOS == "E2E8" ] ; then
+					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"nameserver 8.8.8.8\" | sudo tee -a /etc/resolv.conf > /dev/null && echo \"nameserver 8.8.4.4\" | sudo tee -a /etc/resolv.conf > /dev/null && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo systemctl status docker && sudo docker run hello-world"
+				fi
 				echo ''
 			fi
 			if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then
