@@ -22,9 +22,51 @@ echo ''
 echo -e "\x1b[3m\x1b[4mVAGRANT VIRTUALBOX STANDALONE\x1b[m"
 echo ''
 
-read -p "Enter Base Location (If Missing, Will Be Created) > " -e -i "/opt/Matsya" BASE
-sudo mkdir -p $BASE/VagVBoxSA
+USERINTERACTION="YES"
+USERVALS=""
+
+BASE=""
+CLUSTERNAME=""
+CONFIRMPROCEED=""
+NODESNUMBER=""
+DEFAULTCONFIG=""
+LANTYPE=""
+NIC=""
+GATEWAY=""
+NETMASK=""
+STARTRANDOMIP=""
+FILEMOUNTOPTION=""
+REALFILEMOUNT=""
+ADDTOHOSTSFILE=""
+
+if [ "$#" -ne 1 ]; then
+	USERVALS=""
+else
+	USERVALS=$1
+	USERINTERACTION="NO"
+	IFS='├' read -r -a USERLISTVALS <<< $USERVALS
+	BASE="${USERLISTVALS[0]}"
+	CLUSTERNAME="${USERLISTVALS[1]}"
+	CONFIRMPROCEED="${USERLISTVALS[2]}"
+	NODESNUMBER="${USERLISTVALS[3]}"
+	DEFAULTCONFIG="${USERLISTVALS[4]}"
+	LANTYPE="${USERLISTVALS[5]}"
+	NIC="${USERLISTVALS[6]}"
+	GATEWAY="${USERLISTVALS[7]}"
+	NETMASK="${USERLISTVALS[8]}"
+	STARTRANDOMIP="${USERLISTVALS[9]}"
+	FILEMOUNTOPTION="${USERLISTVALS[10]}"	
+	REALFILEMOUNT="${USERLISTVALS[11]}"	
+	ADDTOHOSTSFILE="${USERLISTVALS[12]}"	
+fi
+if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+	read -p "Enter Base Location (If Missing, Will Be Created) > " -e -i "/opt/Matsya" BASE
+fi
+sudo mkdir -p $BASE/K8sMN
+sudo mkdir -p $BASE/mounts
 sudo mkdir -p $BASE/Repo
+sudo mkdir -p $BASE/tmp
+sudo mkdir -p $BASE/VagVBoxSA
 ISFA="$BASE/Repo/KLM15_v1_1_0.box"
 VBOXCHOICE="AUTO"
 if [ -f "$ISFA" ]
@@ -68,8 +110,10 @@ OPTION 2
 fi
 UUID=$(uuidgen)
 UUIDREAL=${UUID:1:6}
-read -p "Enter Cluster Name (Preferably Unique...) > " -e -i "$UUIDREAL" CLUSTERNAME
-echo ""
+if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+	read -p "Enter Cluster Name (Preferably Unique...) > " -e -i "$UUIDREAL" CLUSTERNAME
+	echo ""
+fi	
 echo "==============================================================================
 
 *To Avoid Conflict Later...Open Another Terminal & Execute
@@ -84,8 +128,10 @@ If '$CLUSTERNAME' Appears On Above Commands,Execute
 ==============================================================================
 "
 echo -e "Enter Choice => { (${GREEN}${BOLD}\x1b[4mC${NORM}${NC})onfirm (${RED}${BOLD}\x1b[4mA${NORM}${NC})bort (${YELLOW}${BOLD}\x1b[4mP${NORM}${NC})roceed } c/a/p"
-read -p "> " -e -i "a" CONFIRMPROCEED	
-echo ""
+if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+	read -p "> " -e -i "a" CONFIRMPROCEED	
+	echo ""
+fi	
 IP_ADDRESS_LIST=()
 if [ $CONFIRMPROCEED == "p" ] || [ $CONFIRMPROCEED == "P" ] ; then
 	sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh	
@@ -94,12 +140,14 @@ fi
 if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	echo "=============================================================================="
 	echo ''
-	read -p "Enter No Of Nodes > " -e -i "5" NODESNUMBER
-	echo ''
-	read -p "Enter Default Config (RAM {1024*n eg: 3GB RAM = 1024*3}, CORES, DISK SIZE {GB}) > " -e -i "3072,1,200" DEFAULTCONFIG
-	echo ''
-	read -p "LAN (*Private OR *Custom) p/c > " -e -i "c" LANTYPE
-	echo ''
+	if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+		read -p "Enter No Of Nodes > " -e -i "6" NODESNUMBER
+		echo ''
+		read -p "Enter Default Config (RAM {1024*n eg: 3GB RAM = 1024*3}, CORES, DISK SIZE {GB}) > " -e -i "2176,2,200" DEFAULTCONFIG
+		echo ''
+		read -p "LAN (*Private OR *Custom) p/c > " -e -i "c" LANTYPE
+		echo ''
+	fi
 	THEIPBASE=""
 	if [ $LANTYPE == "c" ] || [ $LANTYPE == "C" ] ; then
 		echo '-----------------------'
@@ -107,35 +155,53 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		echo '-----------------------'
 		ip -br -c addr show
 		echo '-----------------------'				
-		echo ''	
-		read -p "Enter NIC > " -e -i "wlp4s0" NIC
 		echo ''
+		if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then	
+			read -p "Enter NIC > " -e -i "enp2s0" NIC
+			echo ''
+		fi
 		echo '-----------------------'
 		ifconfig $NIC
 		echo ''
 		route -n | grep "$NIC\|Gateway"
 		echo '-----------------------'
 		echo ''
-		read -p "Enter Gateway > " -e -i "192.168.1.1" GATEWAY
-		echo ''
-		read -p "Enter Netmask > " -e -i "255.255.255.0" NETMASK
-		echo ''	
+		if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then		
+			read -p "Enter Gateway > " -e -i "192.168.1.1" GATEWAY
+			echo ''
+			read -p "Enter Netmask > " -e -i "255.255.255.0" NETMASK
+			echo ''
+		fi	
 		IFS='.'
 		read -ra GTWY <<< "$GATEWAY"
 		BASEIP=$(echo "${GTWY[0]}.${GTWY[1]}.${GTWY[2]}.")
 		THEIPBASE=$(echo "${GTWY[0]}.${GTWY[1]}.${GTWY[2]}.")
 		DIFF=$((200-100+1))
 		R=$(($(($RANDOM%$DIFF))+100))
-		read -p "Random Starting IP > $BASEIP" -e -i "$R" STARTRANDOMIP
-		echo ''
+		if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+			read -p "Random Starting IP > $BASEIP" -e -i "$R" STARTRANDOMIP
+			echo ''
+		fi
 	else
 		DIFF=$((200-100+1))
 		R=$(($(($RANDOM%$DIFF))+100))
 		BASEIP="192.168.50."
 		THEIPBASE="192.168.50."
-		read -p "Random Starting IP > $BASEIP" -e -i "$R" STARTRANDOMIP
-		echo ''													
+		if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+			read -p "Random Starting IP > $BASEIP" -e -i "$R" STARTRANDOMIP
+			echo ''	
+		fi												
 	fi
+	if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+		read -p "File Mount (*Local OR *Custom) l/c > " -e -i "l" FILEMOUNTOPTION
+		echo ''	
+	fi
+	if [ $FILEMOUNTOPTION == "c" ] || [ $FILEMOUNTOPTION == "C" ] ; then
+		if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then
+			read -p "Enter Mount Location(s) > " -e -i "$BASE/mounts/$CLUSTERNAME/disk1,$BASE/mounts/$CLUSTERNAME/disk2,$BASE/mounts/$CLUSTERNAME/disk3,$BASE/mounts/$CLUSTERNAME/disk1,$BASE/mounts/$CLUSTERNAME/disk2,$BASE/mounts/$CLUSTERNAME/disk3" REALFILEMOUNT
+			echo ''
+		fi
+	fi	
 	sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME
 	sudo mkdir -p $BASE/VagVBoxSA/$CLUSTERNAME/Configs
 	sudo mkdir -p $BASE/VagVBoxSA/$CLUSTERNAME/Keys
@@ -155,7 +221,18 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 	for ((i = SERIESSTART; i < SERIESEND; i++))
 	do 
 		NEWIPADDR="${BASEIP}${i}"
-		IP_ADDRESS_LIST+=("$NEWIPADDR")
+		if [ "$REALFILEMOUNT" == "null" ] || [ "$REALFILEMOUNT" = "" ] ; then		
+			IP_ADDRESS_LIST+=("$NEWIPADDR¬$BASE/VagVBoxSA/$CLUSTERNAME/VM")
+		else
+			IFS=',' read -r -a ARRAYFILEMOUNT <<< $REALFILEMOUNT
+			ARRAYLENFILEMOUNT=${#ARRAYFILEMOUNT[@]}
+			ARRAYLENFILEMOUNT=$((ARRAYLENFILEMOUNT - 1))
+			if (( $COUNTERx > $ARRAYLENFILEMOUNT )) ; then
+				IP_ADDRESS_LIST+=("$NEWIPADDR¬$BASE/VagVBoxSA/$CLUSTERNAME/VM")
+			else
+				IP_ADDRESS_LIST+=("$NEWIPADDR¬""${ARRAYFILEMOUNT[$COUNTERx]}")
+			fi
+		fi
 		IP_ADDRESS_HYPHEN=${NEWIPADDR//./-}
 		echo "$NEWIPADDR	matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN.local"
 		sudo mkdir -p $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN
@@ -164,21 +241,27 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 		fi
 		COUNTERx=$((COUNTERx + 1))
 	done
+	
 	SSHBYCOORDINATOR+="echo '-----------------------'"
 	echo '-----------------------'
-	echo ''	
-	read -p "Add To (/etc/hosts) y/n > " -e -i "y" ADDTOHOSTSFILE	
+	echo ''
 	WHENJOBBEGAN=$(echo $(date +%H):$(date +%M))
-	echo ""
+	if [ "$USERINTERACTION" == "YES" ] || [ "$USERINTERACTION" == "yes" ] ; then	
+		read -p "Add To (/etc/hosts) y/n > " -e -i "y" ADDTOHOSTSFILE			
+		echo ""
+	fi
 	DESTROYCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
 sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt 
 sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant destroy -f  
 sudo vagrant box list | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant box remove -f
+sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh
 sudo rm -rf $BASE/VagVBoxSA/$CLUSTERNAME
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME.ppk 
-sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh	
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start-pre.sh	
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
+sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec.sh
@@ -186,17 +269,34 @@ sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-exec
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
 sudo rm -rf $BASE/matsya-vagvbox-sa-$CLUSTERNAME-remove.sh
 ")
-	echo "$DESTROYCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh > /dev/null	
+	echo "$DESTROYCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh > /dev/null
+		
 	STARTCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
 
+sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start-pre.sh
 sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant up
 ")
 	echo "$STARTCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh > /dev/null	
+
+	STARTPRECLUSTERSCRIPT=$(echo '#!/bin/bash
+	
+	
+	')
+	echo "$STARTPRECLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start-pre.sh > /dev/null	
+	
 	STOPCLUSTERSCRIPT=$(echo '#!/bin/bash'"	
 
 sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs -L 1 sudo vagrant halt
+sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh
 ")
-	echo "$STOPCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh > /dev/null		
+	echo "$STOPCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh > /dev/null
+	
+	STOPPOSTCLUSTERSCRIPT=$(echo '#!/bin/bash
+	
+	
+	')
+	echo "$STOPPOSTCLUSTERSCRIPT" | sudo tee $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh > /dev/null	
+			
 	echo "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 " | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts > /dev/null	
@@ -228,9 +328,13 @@ sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs
 	echo '-----------------------'
 	COUNTER=0
 	COORDINATOR="NONE"
-	RANDOMSSHPORT=$(shuf -i 45000-46000 -n 1)		
-	for VMIP in "${IP_ADDRESS_LIST[@]}"
+	RANDOMSSHPORT=$(shuf -i 45000-46000 -n 1)	
+	
+	for IP_ADDRESS_VALS_LIST in "${IP_ADDRESS_LIST[@]}"
 	do
+		IFS='¬' read -r -a IP_ADDRESS_VALS_LISTVals <<< $IP_ADDRESS_VALS_LIST
+		VMIP="${IP_ADDRESS_VALS_LISTVals[0]}"
+		THEFILEMOUNTLOCATION="${IP_ADDRESS_VALS_LISTVals[1]}"		
 		IP_ADDRESS_HYPHEN3=${VMIP//./-}
 		NAMEOFTHECLUSTERBOX="$CLUSTERNAME"
 		CLUSTERBOXURL="https://bit.ly/MatsyaKLM15VagVBox"
@@ -255,6 +359,7 @@ sudo vagrant global-status --prune | grep $CLUSTERNAME | cut -f 1 -d ' ' | xargs
 			THENAMEOFVBBOX="matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3-coordinator​"
 			DEFCONFGDISKSIZE="50GB"
 			DEFCONFGMEM="512"
+			DEFCONFGCORES="1"
 			THENAMETOSHOWONSCREEN="$VMIP (Coordinator)"
 		fi			    
 	    	echo "Vagrant.configure(\"2\") do |config|
@@ -295,7 +400,7 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		echo '-----------------------'
 		echo "$THENAMETOSHOWONSCREEN"
 		echo '-----------------------'
-		sudo -H -u root bash -c "pushd $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3 && sudo vboxmanage setproperty machinefolder $BASE/VagVBoxSA/$CLUSTERNAME/VM && sudo vagrant up && sudo vboxmanage setproperty machinefolder default && popd"
+		sudo -H -u root bash -c "pushd $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3 && sudo vboxmanage setproperty machinefolder $THEFILEMOUNTLOCATION && sudo vagrant up && sudo vboxmanage setproperty machinefolder default && popd"
 		if (( $COUNTER == 0 )) ; then
 			echo ""
 		else
@@ -318,11 +423,12 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		JDKSETUPPATH="$BASE/Repo/Matsya-SetUp-Java.sh"
 		SSHRELATEDRPMS="$BASE/Repo/policycoreutils-python.7z"
 		THEHOSTSFILE="$BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts"
-		sudo sshpass -p "$VAGRANTPWD" scp $JDKPATH vagrant@$VMIP:/home/vagrant
-		sudo sshpass -p "$VAGRANTPWD" scp $SQLJDKCONNECTORPATH vagrant@$VMIP:/home/vagrant
-		sudo sshpass -p "$VAGRANTPWD" scp $JDKSETUPPATH vagrant@$VMIP:/home/vagrant
+		#sudo sshpass -p "$VAGRANTPWD" scp $JDKPATH vagrant@$VMIP:/home/vagrant
+		#sudo sshpass -p "$VAGRANTPWD" scp $SQLJDKCONNECTORPATH vagrant@$VMIP:/home/vagrant
+		#sudo sshpass -p "$VAGRANTPWD" scp $JDKSETUPPATH vagrant@$VMIP:/home/vagrant
 		sudo sshpass -p "$VAGRANTPWD" scp $THEHOSTSFILE vagrant@$VMIP:/home/vagrant
-		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc && sudo mv /home/vagrant/jdk11.7z /opt/java && sudo mv /home/vagrant/mysql-connector-java-8.0.23.jar /opt/java && sudo mv /home/vagrant/Matsya-SetUp-Java.sh /opt/java && sudo chmod 777 /opt/java/Matsya-SetUp-Java.sh && sudo /opt/java/Matsya-SetUp-Java.sh"
+		#sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc && sudo mv /home/vagrant/jdk11.7z /opt/java && sudo mv /home/vagrant/mysql-connector-java-8.0.23.jar /opt/java && sudo mv /home/vagrant/Matsya-SetUp-Java.sh /opt/java && sudo chmod 777 /opt/java/Matsya-SetUp-Java.sh && sudo /opt/java/Matsya-SetUp-Java.sh"
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc"
 		sudo sshpass -p "$VAGRANTPWD" scp $SSHRELATEDRPMS vagrant@$VMIP:/home/vagrant
 		if (( $COUNTER == 0 )) ; then
 			echo ''
@@ -335,10 +441,13 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	done
 	sudo ssh vagrant@$COORDINATOR -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo -e  'y\n'|ssh-keygen -t rsa -P '' -f /home/vagrant/.ssh/id_rsa && cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys && eval \$(ssh-agent) > /dev/null && ssh-add && MATSYAPSWD=\$(sudo cat /usr/bin/.mtsypswd) && sshpass -p \"\$MATSYAPSWD\" ssh-copy-id -i /home/vagrant/.ssh/id_rsa.pub -o StrictHostKeyChecking=no -o IdentitiesOnly=yes vagrant@$COORDINATOR"
 	sudo ssh vagrant@$COORDINATOR -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "$SSHBYCOORDINATOR"	
-	for VMIP in "${IP_ADDRESS_LIST[@]}"
+	for IP_ADDRESS_VALS_LIST in "${IP_ADDRESS_LIST[@]}"
 	do
+		IFS='¬' read -r -a IP_ADDRESS_VALS_LISTVals <<< $IP_ADDRESS_VALS_LIST
+		VMIP="${IP_ADDRESS_VALS_LISTVals[0]}"
+		THEFILEMOUNTLOCATION="${IP_ADDRESS_VALS_LISTVals[1]}"
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo 7z x policycoreutils-python.7z -o. && sudo yum install -y policycoreutils-python/* && sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z"
-		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z && SSHPORT=\"$RANDOMSSHPORT\" && sudo systemctl stop postfix && sudo systemctl disable postfix && sudo systemctl start firewalld && sudo systemctl enable firewalld && sudo sed -i -e s~\"Port\"~\"#Port\"~g /etc/ssh/sshd_config && echo \"Port \$SSHPORT\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo semanage port -a -t ssh_port_t -p tcp \$SSHPORT && sudo semanage port -l | grep ssh && sudo firewall-cmd --permanent --zone=public --add-port=\$SSHPORT/tcp && sudo firewall-cmd --reload && sudo systemctl restart sshd.service && echo '-----' && sudo lsof -nP -iTCP -sTCP:LISTEN | grep \"COMMAND\|IPv4\" && echo '-----' && sudo netstat -tnlp | grep -v tcp6 && echo '-----'"		
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z && SSHPORT=\"$RANDOMSSHPORT\" && sudo systemctl stop postfix && sudo systemctl disable postfix && sudo systemctl start firewalld && sudo systemctl enable firewalld && sudo sed -i -e s~\"Port\"~\"#Port\"~g /etc/ssh/sshd_config && echo \"Port \$SSHPORT\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo semanage port -a -t ssh_port_t -p tcp \$SSHPORT && sudo semanage port -l | grep ssh && sudo firewall-cmd --permanent --zone=public --add-port=\$SSHPORT/tcp && sudo firewall-cmd --reload && sudo systemctl restart sshd.service && echo '-----' && sudo lsof -nP -iTCP -sTCP:LISTEN | grep \"COMMAND\|IPv4\" && echo '-----' && sudo netstat -tnlp | grep -v tcp6 && echo '-----' && sudo route del default gw 10.0.2.2 && sudo route add default gw $GATEWAY"		
 	done			
 	echo ''
 	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-NodeAddTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh
@@ -373,8 +482,12 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 	echo "SSH~$RANDOMSSHPORT" | sudo tee -a $BASE/VagVBoxSA/$CLUSTERNAME/.ports > /dev/null
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start-pre.sh
+	sudo chmod -R u=rwx,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-start-pre.sh	
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop.sh
+	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh
+	sudo chmod -R u=rwx,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh	
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
 	sudo chmod -R u=x,g=,o= $BASE/matsya-vagvbox-sa-$CLUSTERNAME-kill.sh
 	sudo chown -R root:root $BASE/matsya-vagvbox-sa-$CLUSTERNAME-push.sh

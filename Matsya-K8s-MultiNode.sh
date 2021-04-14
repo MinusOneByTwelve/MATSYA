@@ -208,7 +208,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 				
 				CHECKIFTERRAFORMISPRESENT=$(jq '.K8sMN.Cluster.Terminals['${j}'].Terraform?' $NODES_JSON)
 				CHECKIFTERRAFORMISPRESENT="${CHECKIFTERRAFORMISPRESENT//$DoubleQuotes/$NoQuotes}"
-				if [ "$CHECKIFTERRAFORMISPRESENT" == "null" ] || [ "$CHECKIFTERRAFORMISPRESENT" = "" ] ; then				
+				if [ "$CHECKIFTERRAFORMISPRESENT" == "null" ] || [ "$CHECKIFTERRAFORMISPRESENT" = "" ] || [ "$CHECKIFTERRAFORMISPRESENT" = "0" ] ; then				
 					if [ "$TerminalIP" == "null" ] || [ "$TerminalIP" = "" ] ; then
 						echo '-----------------------'					
 						echo -e "${RED}${BOLD}\x1b[5mERROR !!! > ${NORM}${NC}\x1b[3mProperty 'IPAddress' Missing In '$NODES_JSON' For Terminal => $Terminal"
@@ -1174,6 +1174,7 @@ $E2EINSTANCEIP	$THENEWNAME
 					sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME
 					echo "sudo mv HOSTS $THEREQUIREDBASE/K8sMN/$CLUSTERNAME" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null					
 					echo "sudo chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/HOSTS && sudo chmod u=r,g=,o= $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/HOSTS" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo rm -rf /etc/hostname && echo \"$THEREQUIREDHOSTNAME\" | sudo tee -a /etc/hostname > /dev/null && sudo hostnamectl set-hostname \"$THEREQUIREDHOSTNAME\"" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
 					echo "sudo mv matsya-k8s-mn-$CLUSTERNAME.pem $THEREQUIREDBASE" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
 					echo "sudo mv matsya-k8s-mn-$CLUSTERNAME.ppk $THEREQUIREDBASE" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
 					echo "sudo mv matsya-k8s-mn-$CLUSTERNAME-terminal.pem $THEREQUIREDBASE" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
@@ -1253,6 +1254,7 @@ $E2EINSTANCEIP	$THENEWNAME
 					sudo chmod 777 $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME
 					echo "sudo mv HOSTS $THEREQUIREDBASE/K8sMN/$CLUSTERNAME" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null					
 					echo "sudo chown $THEREQUIREDUSER:$THEREQUIREDUSER $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/HOSTS && sudo chmod u=r,g=,o= $THEREQUIREDBASE/K8sMN/$CLUSTERNAME/HOSTS" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
+					echo "sudo rm -rf /etc/hostname && echo \"$THEREQUIREDHOSTNAME\" | sudo tee -a /etc/hostname > /dev/null && sudo hostnamectl set-hostname \"$THEREQUIREDHOSTNAME\"" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
 					echo "sudo mv matsya-k8s-mn-$CLUSTERNAME.pem $THEREQUIREDBASE" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
 					echo "sudo mv matsya-k8s-mn-$CLUSTERNAME.ppk $THEREQUIREDBASE" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null
 					echo "sudo mv matsya-k8s-mn-$CLUSTERNAME-terminal.pem $THEREQUIREDBASE" | sudo tee -a $BASE/K8sMN/$CLUSTERNAME/$RANDOM2FILENAME > /dev/null

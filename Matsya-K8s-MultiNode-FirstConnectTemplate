@@ -8,7 +8,7 @@ THEOSNAME="OSNAMETOBEUSED"
 THEBASENAME="BASENAMETOBEUSED"
 THECLUSTERNAME="CLUSTERNAMETOBEUSED"
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "E2ED" ] || [ $THEOSNAME == "E2EU" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "POST" ] || [ $THEOSNAME == "E2ED" ] || [ $THEOSNAME == "E2EU" ] ; then
 	sudo mkdir -p $THEBASENAME/K8sMN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/K8sMN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -49,7 +49,16 @@ if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "E2E7" ] ; then
 	sudo yum install -y terraform
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-	sudo yum install -y docker-ce docker-ce-cli containerd.io && sudo systemctl enable docker && sudo systemctl start docker && sudo docker run hello-world
+	sudo yum install -y docker-ce docker-ce-cli containerd.io
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
@@ -103,7 +112,15 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cl
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
 	sudo yum remove buildah* -y && sudo yum remove podman* -y && VERSION=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | grep tag_name | cut -d '"' -f 4 | sed -e "s#v##") && URL='https://download.docker.com/linux/centos/8/x86_64/stable/Packages/'$(wget -q -O- https://download.docker.com/linux/centos/8/x86_64/stable/Packages/ | grep href | grep .el8.x86_64.rpm | grep containerd.io- | grep $VERSION | sed -e "s#<a href=\"##" | sort -r | head -n1 | awk '{split($0,a,">"); print a[1]}' | sed -e "s#\"##") && sudo yum install -y $URL
-	sudo yum install -y docker-ce docker-ce-cli 
+	sudo yum install -y docker-ce docker-ce-cli
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	 
 	sudo systemctl enable docker 
 	sudo systemctl start docker
 	echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf > /dev/null
@@ -139,17 +156,16 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial" | sudo tee /etc/yum.r
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
 	sudo yum remove buildah* -y && sudo yum remove podman* -y && VERSION=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | grep tag_name | cut -d '"' -f 4 | sed -e "s#v##") && URL='https://download.docker.com/linux/centos/8/x86_64/stable/Packages/'$(wget -q -O- https://download.docker.com/linux/centos/8/x86_64/stable/Packages/ | grep href | grep .el8.x86_64.rpm | grep containerd.io- | grep $VERSION | sed -e "s#<a href=\"##" | sort -r | head -n1 | awk '{split($0,a,">"); print a[1]}' | sed -e "s#\"##") && sudo yum install -y $URL
-	sudo yum install -y docker-ce docker-ce-cli 
-	sudo systemctl enable docker 
-	sudo systemctl start docker
-	if [ $THEOSNAME == "E2E8" ] ; then
-		echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf > /dev/null
-		echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf > /dev/null
-		sudo systemctl daemon-reload
-		sudo systemctl restart docker
-		sudo systemctl status docker
-	fi	 
-	sudo docker run hello-world
+	sudo yum install -y docker-ce docker-ce-cli
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
@@ -178,7 +194,16 @@ if [ $THEOSNAME == "FDR" ] || [ $THEOSNAME == "FDR" ] ; then
 	sudo dnf -y install dnf-plugins-core
 	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
 	sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-	sudo dnf install -y docker-ce docker-ce-cli containerd.io && sudo systemctl enable docker && sudo systemctl start docker && sudo docker run hello-world
+	sudo dnf install -y docker-ce docker-ce-cli containerd.io
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world
 	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
 	echo "[kubernetes]
 name=Kubernetes
@@ -198,7 +223,7 @@ exclude=kubelet kubeadm kubectl" | sudo tee /etc/yum.repos.d/kubernetes.repo > /
 	sudo systemctl status sshd
 fi
 
-if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "E2EU" ] ; then
+if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" ] || [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "POST" ] || [ $THEOSNAME == "E2EU" ] ; then
 	sudo rm -rf /var/lib/dpkg/lock-frontend
 	sudo rm -rf /var/lib/dpkg/lock
 	sudo apt-get update -y
@@ -235,7 +260,16 @@ if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" ] || [ $THEOSNAME == "MNT" 
 	if [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU" ] ; then
 		echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 	fi		
-	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl
+	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl
 fi
 
 if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "E2ED" ] ; then
@@ -250,18 +284,43 @@ if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "E2ED" ] ; then
 	curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 	sudo rm -rf /etc/apt/sources.list.d/docker.list
 	echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl	
+	sudo apt-get update -y && sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl	
 fi
 
-if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] ; then	
-	sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl					
+if [ $THEOSNAME == "POS" ] || [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "POST" ] ; then	
+	sudo apt-get install -y terraform docker-ce docker-ce-cli containerd.io
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world && sudo apt-get install -y kubelet kubeadm kubectl					
 fi
 
-if [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "POSB" ] ; then	
+if [ $THEOSNAME == "POSB" ] || [ $THEOSNAME == "POST" ] ; then	
 	ABC="XYZ"
 else
 	sudo swapoff -a					
 fi
+
+sudo rm -rf /etc/modules-load.d/k8s.conf
+sudo rm -rf /etc/sysctl.d/k8s.conf
+echo "br_netfilter" | sudo tee /etc/modules-load.d/k8s.conf > /dev/null
+echo "net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1" | sudo tee /etc/sysctl.d/k8s.conf > /dev/null
+sudo sysctl --system
 
 sudo rm -rf $THEBASENAME/K8sMN/$THECLUSTERNAME/.Sync
 SYNCDATE=$(TZ=Asia/Kolkata date '+%F %T')

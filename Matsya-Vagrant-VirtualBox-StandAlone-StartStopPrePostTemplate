@@ -1,0 +1,32 @@
+===============================================================================================================================================
+sudo mkdir -p /opt/Matsya/mounts
+
+sudo mkdir -p /opt/Matsya/mounts/alpha4
+sudo mkdir -p /opt/Matsya/mounts/alpha4/disk1
+sudo mkdir -p /opt/Matsya/mounts/alpha4/disk2
+sudo mkdir -p /opt/Matsya/mounts/alpha4/disk3
+
+sudo umount -l /opt/Matsya/mounts/alpha4/disk1
+sudo umount -l /opt/Matsya/mounts/alpha4/disk2
+sudo umount -l /opt/Matsya/mounts/alpha4/disk3
+
+sudo mount /dev/nvme0n1p4 /opt/Matsya/mounts/alpha4/disk1
+sudo mount /dev/nvme0n1p7 /opt/Matsya/mounts/alpha4/disk2
+sudo mount /dev/nvme0n1p8 /opt/Matsya/mounts/alpha4/disk3
+
+sudo rm -rf /opt/Matsya/mounts/alpha4/disk1/lost+found
+sudo rm -rf /opt/Matsya/mounts/alpha4/disk2/lost+found
+sudo rm -rf /opt/Matsya/mounts/alpha4/disk3/lost+found
+===============================================================================================================================================
+
+===============================================================================================================================================
+sudo umount -l /opt/Matsya/mounts/alpha4/disk1
+sudo umount -l /opt/Matsya/mounts/alpha4/disk2
+sudo umount -l /opt/Matsya/mounts/alpha4/disk3
+===============================================================================================================================================
+
+===============================================================================================================================================
+/opt/Matsya/Repo/Matsya-Vagrant-VirtualBox-StandAlone.sh /opt/Matsya├alpha5├p├2├2176,2,200├c├enp2s0├192.168.1.1├255.255.255.0├125├c├/opt/Matsya/mounts/alpha4/disk1,/opt/Matsya/mounts/alpha4/disk2,/opt/Matsya/mounts/alpha4/disk3├y
+
+sudo /opt/Matsya/matsya-vagvbox-sa-alpha5-add.sh 2├2176,2,200├c├/opt/Matsya/mounts/alpha4/disk1├135├Br1ecyjkOakqywb├1uhV4JSd9jxvKOk
+===============================================================================================================================================
