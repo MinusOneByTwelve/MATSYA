@@ -4,6 +4,10 @@ set -e
 
 clear
 
+CURRENTUSER=$(whoami)
+sudo rm -rf /home/$CURRENTUSER/.ssh/known_hosts
+sudo rm -rf /root/.ssh/known_hosts
+
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
@@ -82,7 +86,7 @@ sudo mkdir -p $BASE/mounts
 sudo mkdir -p $BASE/Repo
 sudo mkdir -p $BASE/tmp
 sudo mkdir -p $BASE/VagVBoxSA
-ISFA="$BASE/Repo/KLM15_v1_1_0.box"
+ISFA="$BASE/Repo/Stack/Bundle/KLM15_v1_1_1.box"
 VBOXCHOICE="AUTO"
 if [ -f "$ISFA" ]
 then
@@ -94,18 +98,12 @@ else
 
 *Vagrant VirtualBox Missing...
 --------
-OPTION 1
---------
-*Download From Here => https://bit.ly/MatsyaKLM15VagVBox
-   * Copy To $BASE/Repo
-   * Rename To KLM15_v1_1_0.box
---------
-OPTION 2
--------- 
-*Automatic Download & Configuration  
+*Download From Here => https://bit.ly/Minus1by12MatsyaPlatform
+   * Copy To $BASE/Repo/Stack/Bundle  
 
 ==============================================================================
 "
+	exit
 	read -p "Enter OPTION 1 OR 2 > " -e -i "2" USERCHOICE
 	echo ''
 	if [ $USERCHOICE == "1" ] || [ $USERCHOICE == "1" ] ; then
@@ -353,14 +351,14 @@ sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh
 		NAMEOFTHECLUSTERBOX="$CLUSTERNAME"
 		CLUSTERBOXURL="https://bit.ly/MatsyaKLM15VagVBox"
 		if [ $VBOXCHOICE == "MANUAL" ] || [ $VBOXCHOICE == "MANUAL" ] ; then
-			CLUSTERBOXURL="$BASE/Repo/KLM15_v1_1_0.box"	
+			CLUSTERBOXURL="$BASE/Repo/Stack/Bundle/KLM15_v1_1_1.box"	
 		fi
 		IFS=','
 		read -ra DEFCONFG <<< "$DEFAULTCONFIG"
 		DEFCONFGMEM=$(echo "${DEFCONFG[0]}")
 		DEFCONFGCORES=$(echo "${DEFCONFG[1]}")
 		ORIGINALSIZEOFDISK=$(echo "${DEFCONFG[2]}")
-		NEWSIZEOFDISK=$((43 + ORIGINALSIZEOFDISK + 17))				
+		NEWSIZEOFDISK=$((22 + ORIGINALSIZEOFDISK + 17))				
 		DEFCONFGDISKSIZE=$(echo "$NEWSIZEOFDISK""GB")
 		VMNETWORKADDRESS="config.vm.network \"private_network\", ip: \"$VMIP\""
 		if [ $LANTYPE == "c" ] || [ $LANTYPE == "C" ] ; then
@@ -371,7 +369,7 @@ sudo $BASE/matsya-vagvbox-sa-$CLUSTERNAME-stop-post.sh
 		if (( $COUNTER == 0 )) ; then
 			COORDINATOR="$VMIP"
 			THENAMEOFVBBOX="matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3-coordinator​"
-			DEFCONFGDISKSIZE="50GB"
+			DEFCONFGDISKSIZE="100GB"
 			DEFCONFGMEM="512"
 			DEFCONFGCORES="1"
 			THENAMETOSHOWONSCREEN="$VMIP (Coordinator)"
@@ -418,11 +416,11 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		if (( $COUNTER == 0 )) ; then
 			echo ""
 		else
-			FINALPOINTTODISKSIZE=$((ORIGINALSIZEOFDISK + 43))
-			THECOMMAND=$(echo 'number="2" && sudo parted --script /dev/sda mkpart primary ext4 43GB '"$FINALPOINTTODISKSIZE"'GB && sudo partprobe /dev/sda && sudo mkfs -F -t ext4 /dev/sda$number && sudo mkfs -F /dev/sda$number -t ext4 && sudo tune2fs -m 0 /dev/sda$number && sdauuid=$(sudo blkid -s UUID -o value /dev/sda$number) && sudo mkdir -p /mnt/MatsyaHDD && sudo mkdir -p /opt/java/Open && sudo mkdir -p /usr/java && sudo mkdir -p /usr/share/java && sudo e2label /dev/sda$number MatsyaHDD && echo "UUID=$sdauuid  /mnt/MatsyaHDD ext4 defaults 0 3" | sudo tee -a /etc/fstab > /dev/null && echo "----------------------------------------------------------------------------------------------" && sudo cat /etc/fstab && echo "----------------------------------------------------------------------------------------------" && lsblk -o name,mountpoint,label,size,fstype,uuid && echo "----------------------------------------------------------------------------------------------" && sudo parted -ls && echo "----------------------------------------------------------------------------------------------"')
+			FINALPOINTTODISKSIZE=$((ORIGINALSIZEOFDISK + 22))
+			THECOMMAND=$(echo 'disknumber="1" && number="3" && sudo parted --script /dev/sda mkpart primary ext4 22GB '"$FINALPOINTTODISKSIZE"'GB && sudo partprobe /dev/sda && sudo mkfs -F -t ext4 /dev/sda$number && sudo mkfs -F /dev/sda$number -t ext4 && sudo tune2fs -m 0 /dev/sda$number && sdauuid=$(sudo blkid -s UUID -o value /dev/sda$number) && sudo mkdir -p /opt/MatsyaHDD/_$disknumber && sudo mkdir -p /opt/java/Open && sudo mkdir -p /usr/java && sudo mkdir -p /usr/share/java && sudo e2label /dev/sda$number MatsyaHDD_$disknumber && echo "UUID=$sdauuid  /opt/MatsyaHDD/_$disknumber ext4 defaults 0 3" | sudo tee -a /etc/fstab > /dev/null && echo "----------------------------------------------------------------------------------------------" && sudo cat /etc/fstab && echo "----------------------------------------------------------------------------------------------" && lsblk -o name,mountpoint,label,size,fstype,uuid && echo "----------------------------------------------------------------------------------------------" && sudo parted -ls && echo "----------------------------------------------------------------------------------------------" && sudo rm -rf /opt/MatsyaHDD/_$disknumber/*')
 			sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key" "$THECOMMAND"
 		fi
-		THECOMMAND2=$(echo 'sudo mkdir -p /mnt/MatsyaHDD && sudo mkdir -p /opt/java/Open && sudo mkdir -p /usr/java && sudo mkdir -p /usr/share/java && echo "'"$MATSYAPWD"'" | sudo tee /usr/bin/.mtsypswd > /dev/null && sudo chmod u=r,g=,o= /usr/bin/.mtsypswd && sudo rm -rf /etc/hostname && echo "'"matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3.local"'" | sudo tee /etc/hostname')
+		THECOMMAND2=$(echo 'sudo useradd -d /home/matsya -s /bin/bash -m matsya && sudo usermod -p $(echo "matsya" | openssl passwd -1 -stdin) matsya && sudo usermod -p $(echo "matsya" | openssl passwd -1 -stdin) root && sudo usermod -aG wheel matsya && sudo rm -f /etc/sudoers.d/matsya-user && echo "matsya ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/matsya-user > /dev/null && sudo mkdir -p /opt/MatsyaHDD && sudo mkdir -p /opt/java/Open && sudo mkdir -p /usr/java && sudo mkdir -p /usr/share/java && echo "'"$MATSYAPWD"'" | sudo tee /usr/bin/.mtsypswd > /dev/null && sudo chmod u=r,g=,o= /usr/bin/.mtsypswd && sudo rm -rf /etc/hostname && echo "'"matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3.local"'" | sudo tee /etc/hostname')
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key" "$THECOMMAND2"						
 		sudo cat $BASE/VagVBoxSA/$CLUSTERNAME/Keys/id_rsa.pub | sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3/.vagrant/machines/default/virtualbox/private_key" 'cat >> $HOME/.ssh/authorized_keys'
 		sudo -H -u root bash -c "pushd $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERNAME-$IP_ADDRESS_HYPHEN3 && sudo vagrant halt && sed -i 's/#config.ssh.private_key_path/config.ssh.private_key_path/' Vagrantfile && popd"
@@ -432,18 +430,11 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo '$VAGRANTPWD' | sudo passwd --stdin 'vagrant'"		
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "echo '$MATSYAPWD' | sudo passwd --stdin 'matsya'"
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" 'sudo sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config && sudo systemctl restart sshd.service'
-		JDKPATH="$BASE/Repo/jdk11.7z"
-		SQLJDKCONNECTORPATH="$BASE/Repo/mysql-connector-java-8.0.23.jar"
-		JDKSETUPPATH="$BASE/Repo/Matsya-SetUp-Java.sh"
-		SSHRELATEDRPMS="$BASE/Repo/policycoreutils-python.7z"
 		THEHOSTSFILE="$BASE/VagVBoxSA/$CLUSTERNAME/Configs/hosts"
-		#sudo sshpass -p "$VAGRANTPWD" scp $JDKPATH vagrant@$VMIP:/home/vagrant
-		#sudo sshpass -p "$VAGRANTPWD" scp $SQLJDKCONNECTORPATH vagrant@$VMIP:/home/vagrant
-		#sudo sshpass -p "$VAGRANTPWD" scp $JDKSETUPPATH vagrant@$VMIP:/home/vagrant
+		#SSHRELATEDRPMS="$BASE/Repo/policycoreutils-python.7z"
 		sudo sshpass -p "$VAGRANTPWD" scp $THEHOSTSFILE vagrant@$VMIP:/home/vagrant
-		#sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc && sudo mv /home/vagrant/jdk11.7z /opt/java && sudo mv /home/vagrant/mysql-connector-java-8.0.23.jar /opt/java && sudo mv /home/vagrant/Matsya-SetUp-Java.sh /opt/java && sudo chmod 777 /opt/java/Matsya-SetUp-Java.sh && sudo /opt/java/Matsya-SetUp-Java.sh"
 		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -f /etc/hosts && sudo mv /home/vagrant/hosts /etc"
-		sudo sshpass -p "$VAGRANTPWD" scp $SSHRELATEDRPMS vagrant@$VMIP:/home/vagrant
+		#sudo sshpass -p "$VAGRANTPWD" scp $SSHRELATEDRPMS vagrant@$VMIP:/home/vagrant
 		if (( $COUNTER == 0 )) ; then
 			echo ''
 		else
@@ -460,8 +451,8 @@ end" | sudo tee $BASE/VagVBoxSA/$CLUSTERNAME/Configs/matsya-vagvbox-sa-$CLUSTERN
 		IFS='¬' read -r -a IP_ADDRESS_VALS_LISTVals <<< $IP_ADDRESS_VALS_LIST
 		VMIP="${IP_ADDRESS_VALS_LISTVals[0]}"
 		THEFILEMOUNTLOCATION="${IP_ADDRESS_VALS_LISTVals[1]}"
-		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo 7z x policycoreutils-python.7z -o. && sudo yum install -y policycoreutils-python/* && sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z"
-		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z && SSHPORT=\"$RANDOMSSHPORT\" && sudo systemctl stop postfix && sudo systemctl disable postfix && sudo systemctl start firewalld && sudo systemctl enable firewalld && sudo sed -i -e s~\"Port\"~\"#Port\"~g /etc/ssh/sshd_config && echo \"Port \$SSHPORT\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo semanage port -a -t ssh_port_t -p tcp \$SSHPORT && sudo semanage port -l | grep ssh && sudo firewall-cmd --permanent --zone=public --add-port=\$SSHPORT/tcp && sudo firewall-cmd --reload && sudo systemctl restart sshd.service && echo '-----' && sudo lsof -nP -iTCP -sTCP:LISTEN | grep \"COMMAND\|IPv4\" && echo '-----' && sudo netstat -tnlp | grep -v tcp6 && echo '-----' && sudo route del default gw 10.0.2.2 && sudo route add default gw $GATEWAY"		
+		#sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "sudo rm -rf policycoreutils-python && sudo 7z x policycoreutils-python.7z -o. && sudo yum install -y policycoreutils-python/lsof-4.87-6.el7.x86_64.rpm && sudo rm -rf policycoreutils-python && sudo rm -rf policycoreutils-python.7z"
+		sudo ssh vagrant@$VMIP -p 22  -o "StrictHostKeyChecking=no" -i "$BASE/matsya-vagvbox-sa-$CLUSTERNAME.pem" "SSHPORT=\"$RANDOMSSHPORT\" && sudo systemctl start firewalld && sudo systemctl enable firewalld && sudo sed -i -e s~\"Port\"~\"#Port\"~g /etc/ssh/sshd_config && echo \"Port \$SSHPORT\" | sudo tee -a /etc/ssh/sshd_config > /dev/null && sudo firewall-cmd --permanent --zone=public --add-port=\$SSHPORT/tcp && sudo firewall-cmd --reload && sudo systemctl restart sshd.service && echo '-----' && sudo lsof -nP -iTCP -sTCP:LISTEN | grep \"COMMAND\|IPv4\" && echo '-----' && sudo netstat -tnlp | grep -v tcp6 && echo '-----' && sudo route del default gw 10.0.2.2 && sudo route add default gw $GATEWAY"						
 	done			
 	echo ''
 	sudo cp $BASE/Repo/Matsya-Vagrant-VirtualBox-StandAlone-NodeAddTemplate $BASE/matsya-vagvbox-sa-$CLUSTERNAME-add.sh

@@ -23,7 +23,7 @@ if [ $THEOSNAME == "DEB" ] || [ $THEOSNAME == "UBU" ] || [ $THEOSNAME == "UBU0" 
 	sudo chmod -R u=rwx,g=rwx,o=rwx $THEBASENAME/MN/$THECLUSTERNAME/$RANDOMUSERNAME
 fi
 
-if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "E2EA" ] || [ $THEOSNAME == "FDR" ] ; then
+if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "E2EA" ] || [ $THEOSNAME == "FDR" ] || [ $THEOSNAME == "MTSA" ] || [ $THEOSNAME == "GCPR" ] || [ $THEOSNAME == "AWSA" ] || [ $THEOSNAME == "AZC8" ] || [ $THEOSNAME == "DOC8" ] || [ $THEOSNAME == "IBC8" ] ; then
 	sudo mkdir -p $THEBASENAME/MN/$THECLUSTERNAME/Keys
 	sudo mkdir -p $THEBASENAME/Repo
 	sudo useradd -d $THEBASENAME/MN/$THECLUSTERNAME/$RANDOMUSERNAME -s /bin/bash -m $RANDOMUSERNAME
@@ -77,10 +77,11 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cl
 	sudo systemctl status sshd
 fi
 
-if [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "E2EA" ] ; then
+if [ $THEOSNAME == "E2E8" ] ; then
 	sudo setenforce 0
 	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 	sudo yum -y install epel-release
+	sudo rm -rf /etc/yum.repos.d/CentOS-HA.repo
 	echo "[HighAvailability]
 name=CentOS-\$releasever - HA
 mirrorlist=http://mirrorlist.centos.org/?release=\$releasever&arch=\$basearch&repo=HighAvailability&infra=\$infra
@@ -129,6 +130,265 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cl
 	sudo systemctl restart docker
 	sudo systemctl status docker	 
 	sudo docker run hello-world
+fi
+
+if [ $THEOSNAME == "AZC8" ] || [ $THEOSNAME == "GCPR" ] || [ $THEOSNAME == "E2EA" ] || [ $THEOSNAME == "AWSA" ] || [ $THEOSNAME == "DOC8" ] || [ $THEOSNAME == "IBC8" ] ; then
+	if [ $THEOSNAME == "E2EA" ] || [ $THEOSNAME == "AWSA" ] ; then
+		sudo rm -rf /etc/yum.repos.d/*
+	fi
+	
+	echo "[ha]
+name=AlmaLinux \$releasever - HighAvailability
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/ha
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/HighAvailability/\$basearch/os/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+## Sources
+[ha-source]
+name=AlmaLinux \$releasever - HighAvailability Source
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/ha-source
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/HighAvailability/Source/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[baseos]
+name=AlmaLinux \$releasever - BaseOS
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/baseos
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/BaseOS/\$basearch/os/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[appstream]
+name=AlmaLinux \$releasever - AppStream
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/appstream
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/AppStream/\$basearch/os/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[powertools]
+name=AlmaLinux \$releasever - PowerTools
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/powertools
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/PowerTools/\$basearch/os/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[extras]
+name=AlmaLinux \$releasever - Extras
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/extras
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/extras/\$basearch/os/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+## Sources
+[baseos-source]
+name=AlmaLinux \$releasever - BaseOS Source
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/baseos-source
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/BaseOS/Source/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[appstream-source]
+name=AlmaLinux \$releasever - AppStream Source
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/appstream-source
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/AppStream/Source/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[powertools-source]
+name=AlmaLinux \$releasever - PowerTools Source
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/powertools-source
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/PowerTools/Source/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[extras-source]
+name=AlmaLinux \$releasever - Extras Source
+mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/extras-source
+# baseurl=https://repo.almalinux.org/almalinux/\$releasever/extras/Source/
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+fastestmirror=1
+
+[epel-modular]
+name=Extra Packages for Enterprise Linux Modular \$releasever - \$basearch
+#baseurl=https://download.fedoraproject.org/pub/epel/\$releasever/Modular/\$basearch
+metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-modular-\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir
+enabled=1
+gpgcheck=0
+countme=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+
+[epel-modular-source]
+name=Extra Packages for Enterprise Linux Modular \$releasever - \$basearch - Source
+#baseurl=https://download.fedoraproject.org/pub/epel/\$releasever/Modular/SRPMS
+metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-modular-source-\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+gpgcheck=0
+
+name=Extra Packages for Enterprise Linux \$releasever - Playground - \$basearch
+#baseurl=https://download.fedoraproject.org/pub/epel/playground/\$releasever/Everything/\$basearch/os
+metalink=https://mirrors.fedoraproject.org/metalink?repo=playground-epel\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir
+enabled=1
+gpgcheck=0
+countme=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+
+[epel-playground-source]
+name=Extra Packages for Enterprise Linux \$releasever - Playground - \$basearch - Source
+#baseurl=https://download.fedoraproject.org/pub/epel/playground/\$releasever/Everything/source/tree/
+metalink=https://mirrors.fedoraproject.org/metalink?repo=playground-source-epel\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+gpgcheck=0
+
+[epel]
+name=Extra Packages for Enterprise Linux \$releasever - \$basearch
+#baseurl=https://download.fedoraproject.org/pub/epel/\$releasever/Everything/\$basearch
+metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir
+enabled=1
+gpgcheck=0
+countme=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+
+[epel-source]
+name=Extra Packages for Enterprise Linux \$releasever - \$basearch - Source
+#baseurl=https://download.fedoraproject.org/pub/epel/\$releasever/Everything/SRPMS
+metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-source-\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+gpgcheck=0" | sudo tee /etc/yum.repos.d/matsya.repo > /dev/null
+
+	if [ $THEOSNAME == "GCPR" ] ; then										
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/Rocky-Devel.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/Rocky-HighAvailability.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/Rocky-Plus.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/Rocky-PowerTools.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/Rocky-ResilientStorage.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/Rocky-Sources.repo
+		
+		sudo rm -rf /etc/yum.repos.d/matsya.repo
+		sudo rm -rf /etc/yum.repos.d/Rocky-RT.repo
+		sudo rm -rf /etc/yum.repos.d/Rocky-Plus.repo
+		sudo rm -rf /etc/yum.repos.d/Rocky-Devel.repo
+		sudo rm -rf /etc/yum.repos.d/Rocky-Sources.repo
+		sudo rm -rf /etc/yum.repos.d/Rocky-ResilientStorage.repo		
+	fi
+	
+	if [ $THEOSNAME == "AZC8" ] ; then
+		sudo rm -rf /etc/yum.repos.d/matsya.repo										
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/CentOS-Linux-HighAvailability.repo
+	fi
+	
+	if [ $THEOSNAME == "DOC8" ] || [ $THEOSNAME == "IBC8" ] ; then
+		sudo rm -rf /etc/yum.repos.d/matsya.repo										
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/CentOS-Linux-HighAvailability.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/CentOS-Linux-AppStream.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/CentOS-Linux-BaseOS.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/CentOS-Linux-Extras.repo
+		sudo sed -i -e s~"enabled=0"~"enabled=1"~g /etc/yum.repos.d/CentOS-Linux-PowerTools.repo		
+	fi	
+	
+	sudo yum -y install epel-release
+	
+	sudo yum install -y nano bzip2-devel ca-certificates chrony corosync curl e2fsprogs epel-release ethtool firewalld gcc git gnupg gnupg2 gzip haproxy haveged hwdata iproute iptables jq libffi-devel mysql ncdu net-tools NetworkManager-tui nmap openldap openssh openssh-clients openssh-server openssl openssl-devel p7zip p7zip-plugins pacemaker parted pcs pxz redhat-lsb-core rsync sshpass telnet tzdata unzip wget xfsprogs xz yum-utils zlib-devel
+
+	sudo systemctl stop iptables && sudo systemctl disable iptables && sudo systemctl mask iptables && sudo systemctl stop firewalld && sudo systemctl disable firewalld
+
+	sudo -H -u root bash -c 'sudo echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+	sudo -H -u root bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/defrag'
+	sudo -H -u root bash -c 'echo "echo never > /sys/kernel/mm/transparent_hugepage/enabled" >> /etc/rc.d/rc.local'
+	sudo -H -u root bash -c 'echo "echo never > /sys/kernel/mm/transparent_hugepage/defrag" >> /etc/rc.d/rc.local'
+	sudo -H -u root bash -c 'chmod u+x /etc/rc.d/rc.local'
+	sudo -H -u root bash -c 'cat /proc/sys/vm/swappiness'
+	sudo -H -u root bash -c 'sudo sysctl vm.swappiness=10'
+	sudo -H -u root bash -c 'cat /proc/sys/vm/swappiness'
+	sudo -H -u root bash -c 'echo "vm.swappiness=10" >> /etc/sysctl.conf'
+
+	sudo systemctl stop firewalld
+	sudo systemctl disable firewalld
+	sudo systemctl stop iptables
+	sudo systemctl disable iptables
+	
+	sudo setenforce 0
+	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+	sudo rm -rf /etc/yum.repos.d/hashicorp.repo
+	release="RHEL" && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
+	sudo yum install -y terraform
+	sudo rm -rf /etc/yum.repos.d/docker-ce.repo
+	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+	sudo yum remove buildah* -y && sudo yum remove podman* -y
+	sudo yum install -y docker-ce docker-ce-cli containerd.io
+	sudo mkdir -p /etc/docker && sudo rm -rf /etc/docker/daemon.json && echo "{
+  \"exec-opts\": [\"native.cgroupdriver=systemd\"],
+  \"log-driver\": \"json-file\",
+  \"log-opts\": {
+    \"max-size\": \"100m\"
+  },
+  \"storage-driver\": \"overlay2\"
+}" | sudo tee /etc/docker/daemon.json > /dev/null	
+	sudo systemctl enable docker && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo docker run hello-world
+	sudo rm -rf /etc/yum.repos.d/kubernetes.repo
+	echo "[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
+	sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+	sudo systemctl enable --now kubelet
+	sudo rm -f /etc/yum.repos.d/kubernetes.repo
+	
+	sudo rm -f /usr/bin/docker-machine
+	wget https://github.com/docker/machine/releases/download/$(curl -s https://api.github.com/repos/docker/machine/releases/latest | grep tag_name | cut -d '"' -f 4)/docker-machine-Linux-x86_64
+	chmod +x docker-machine-Linux-x86_64
+	sudo mv docker-machine-Linux-x86_64 /usr/bin/docker-machine
+	docker-machine --version
+
+	sudo rm -f /usr/bin/docker-compose
+	wget https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)/docker-compose-Linux-x86_64
+	chmod +x docker-compose-Linux-x86_64
+	sudo mv docker-compose-Linux-x86_64 /usr/bin/docker-compose
+	docker-compose --version
+				
+	sudo sed -i "s/GSSAPIAuthentication/#GSSAPIAuthentication/g" /etc/ssh/sshd_config
+	sudo sed -i "s/GSSAPICleanupCredentials/#GSSAPICleanupCredentials/g" /etc/ssh/sshd_config
+	sudo sed -i "s/AuthorizedKeysFile/#AuthorizedKeysFile/g" /etc/ssh/sshd_config
+	echo "AuthorizedKeysFile %h/.ssh/authorized_keys" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+	sudo systemctl restart sshd
+	sudo systemctl status sshd
+
+	sudo yum install -y firewalld
+	sudo service firewalld stop
+	sudo service firewalld status
+	sudo setenforce 0
+	sudo sed -i 's/^SELINUX=enforcing$/SELINUX=disabled/' /etc/selinux/config
+	sudo sed -i 's/^SELINUX=permissive$/SELINUX=disabled/' /etc/selinux/config
+
+	wget https://Minus1by12.com/Matsya/axel-2.4-9.el7.x86_64.rpm
+	sudo yum install -y axel-2.4-9.el7.x86_64.rpm
+	sudo rm -rf axel-2.4-9.el7.x86_64.rpm		
 fi
 
 if [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "CT8" ] ; then
@@ -316,7 +576,7 @@ echo "net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1" | sudo tee /etc/sysctl.d/k8s.conf > /dev/null
 sudo sysctl --system
 
-if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "FDR" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "E2E8" ] || [ $THEOSNAME == "E2EA" ] ; then
+if [ $THEOSNAME == "CT7" ] || [ $THEOSNAME == "CT8" ] || [ $THEOSNAME == "AWS" ] || [ $THEOSNAME == "FDR" ] || [ $THEOSNAME == "E2E7" ] || [ $THEOSNAME == "E2E8" ] ; then
 	sudo yum install -y firewalld
 	sudo service firewalld stop
 	sudo service firewalld status

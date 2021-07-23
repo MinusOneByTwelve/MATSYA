@@ -376,7 +376,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 								COUNTERx=$((COUNTERx + 1))
 							done
 							COUNTERx=0
-							FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWPOSTTERMINALNAME├$THENEWPOSTIP├vagrant¬$POSTVAGRANTPWD├$POSTRANDOMSSHPORT├CT7├$POSTBASE├$TerminalTheRqLocation")
+							FINAL_BEFORE_CONNECT_TERMINAL_LIST+=("$THENEWPOSTTERMINALNAME├$THENEWPOSTIP├vagrant¬$POSTVAGRANTPWD├$POSTRANDOMSSHPORT├MTSA├$POSTBASE├$TerminalTheRqLocation")
 							POSTALLOCATIONHAPPENED="YES"
 						fi					
 					fi
@@ -1412,9 +1412,12 @@ $E2EINSTANCEIP	$THENEWNAME
 					sudo rm -rf $BASE/tmp/$RANDOMSECFILENAME
 				fi				
 				sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /root/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf /home/$THEREQUIREDUSER/.bash_history && echo \"$THEREQUIREDACCESS\" | sudo -S rm -rf $THEREQUIREDBASE/MN/$CLUSTERNAME/$RANDOMUSERNAME/.bash_history"						
-				if [ $THEREQUIREDOS == "E2E8" ] || [ $THEREQUIREDOS == "E2EA" ] ; then
+				if [ $THEREQUIREDOS == "E2E8" ] ; then
 					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"nameserver 8.8.8.8\" | sudo tee -a /etc/resolv.conf > /dev/null && echo \"nameserver 8.8.4.4\" | sudo tee -a /etc/resolv.conf > /dev/null && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo systemctl status docker && sudo docker run hello-world && sudo yum install -y firewalld && sudo service firewalld stop && sudo service firewalld status && sudo setenforce 0 && sudo sed -i 's/^SELINUX=enforcing$/SELINUX=disabled/' /etc/selinux/config"
 				fi
+				if [ $THEREQUIREDOS == "E2EA" ] ; then
+					sshpass -p "$THEREQUIREDACCESS" ssh -o ConnectTimeout=15 $THEREQUIREDUSER@$THEREQUIREDIP -p $THEREQUIREDPORT -o "StrictHostKeyChecking=no" "echo \"nameserver 8.8.8.8\" | sudo tee -a /etc/resolv.conf > /dev/null && echo \"nameserver 8.8.4.4\" | sudo tee -a /etc/resolv.conf > /dev/null && sudo systemctl daemon-reload && sudo systemctl restart docker && sudo systemctl status docker && sudo docker run hello-world"
+				fi				
 				echo ''
 			fi
 			if [ $THEREQUIREDAUTH == "PEM" ] || [ $THEREQUIREDAUTH == "PEM" ] ; then

@@ -41,7 +41,7 @@ for Config in $BASE/VagVBoxSA/$CLUSTERNAME/Configs/*; do
 		echo "----------------"
 		echo 'Copy Started...'
 		echo '~~~~~~~~~~~~~~~~'
-		sudo sshpass -p $2 scp -P $RANDOMSSHPORT $3 vagrant@$Config:/home/vagrant
+		sudo sshpass -p $2 scp -P $RANDOMSSHPORT -o "StrictHostKeyChecking=no" $3 vagrant@$Config:/home/vagrant
 		echo 'Copy Complete...'
 		echo '~~~~~~~~~~~~~~~~'		
 		echo ''
