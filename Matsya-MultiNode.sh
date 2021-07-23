@@ -27,7 +27,7 @@ echo -e "${GREEN}===============================================================
 echo ''
 echo -e "\x1b[3m\x1b[4mK8s MULTINODE\x1b[m"
 echo ''
-read -p "Enter File Path For Settings > " -e -i "/opt/Matsya/Repo/Matsya.config" NODES_JSON
+read -p "Enter File Path For Settings > " -e -i "/opt/Matsya/Repo/Stack/Config/Matsya.config" NODES_JSON
 echo "                                                                         "
 
 BASE=$(jq '.MN.Cluster.Terminal[0].BaseLocation' $NODES_JSON)
@@ -509,7 +509,7 @@ if [ $CONFIRMPROCEED == "c" ] || [ $CONFIRMPROCEED == "C" ] ; then
 							echo ''
 							exit 
 						fi
-						GlobalE2EPEMFile="$BASE/Repo/Matsya-SetUp-SSHE2E.pem"
+						GlobalE2EPEMFile="$BASE/Repo/Stack/Config/Matsya-SetUp-SSHE2E.pem"
 						sudo chown $CURRENTUSER:$CURRENTUSER $GlobalE2EPEMFile
 						sudo chmod 400 $GlobalE2EPEMFile
 						E2EMatsyaUserCreationCode=""

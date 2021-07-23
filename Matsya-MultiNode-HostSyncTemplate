@@ -48,7 +48,7 @@ echo ''
 
 NODES_JSON=""
 if [ "$#" -ne 2 ]; then
-	read -p "Enter File Path For Settings > " -e -i "/opt/Matsya/Repo/Sync" NODES_JSON
+	read -p "Enter File Path For Settings > " -e -i "/opt/Matsya/Repo/Stack/Config/Sync" NODES_JSON
 	echo ''
 else
 	NODES_JSON=$1
